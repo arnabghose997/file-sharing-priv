@@ -186,9 +186,12 @@ func callCreateNFTAPI(nodeAddress string, mintNFTdata MintNFTData) (string, erro
 		return "", err
 	}
 
-	fmt.Println("Response Body (str) in CreateNFT API:", string(createNFTAPIResponse))
 	fmt.Println("Response Body in CreateNFT API:", basicResponse)
-	
+	fmt.Println("Status in CreateNFT API:", basicResponse.Status)
+	fmt.Println("Message in CreateNFT API:", basicResponse.Message)
+	fmt.Println("Result in CreateNFT API:", basicResponse.Result)
+
+
 	if basicResponse.Result == "" {
 		return "", fmt.Errorf("unable to fetch NFT ID after CreateNFT API call")
 	}
