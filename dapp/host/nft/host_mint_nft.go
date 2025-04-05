@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"time"
 
 	// "io/ioutil"
 	"mime/multipart"
@@ -14,9 +15,9 @@ import (
 
 	"github.com/bytecodealliance/wasmtime-go"
 	"github.com/gorilla/websocket"
+	"github.com/rubixchain/rubix-wasm/go-wasm-bridge/context"
 	"github.com/rubixchain/rubix-wasm/go-wasm-bridge/host"
 	"github.com/rubixchain/rubix-wasm/go-wasm-bridge/utils"
-	"github.com/rubixchain/rubix-wasm/go-wasm-bridge/context"
 )
 
 type BasicResponse struct {
@@ -268,6 +269,10 @@ func callDeployNFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorumT
 	/*
 		
 	*/
+	errDeadline := webSocketConn.SetReadDeadline(time.Now().Add(40 * time.Second))
+	if errDeadline != nil {
+		return "", fmt.Errorf("error setting read deadline for web socket connection, err: %v", err)
+	}
 
 	_, resultBytes, err := webSocketConn.ReadMessage()
 	if err != nil {
