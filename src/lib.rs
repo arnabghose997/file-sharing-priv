@@ -16,7 +16,7 @@ pub struct PublishAssetReq {
     asset_metadata: String,
     asset_owner_did: String,
     asset_publish_description: String,
-    asset_value: u32,
+    asset_value: String,
 
     depin_provider_did: String,
     depin_hosting_cost: u32, // Hosting fees 
@@ -29,12 +29,17 @@ pub struct PublishAssetReq {
 pub fn publish_asset(publish_asset_req: PublishAssetReq) -> Result<String, WasmError> {
     // Create NFT for AI Model/Dataset
     
+    let asset_value_float: f64 = match publish_asset_req.asset_value.parse::<f64>() {
+        Ok(value) => value,
+        Err(_) => return Err(WasmError::from(format!("failed to parse asset_value: {}", publish_asset_req.asset_value))),
+    };
+
     let asset_creation_req = MintNft {
         did: publish_asset_req.asset_owner_did.clone(),
         metadata: publish_asset_req.asset_metadata.clone(),
         artifact: publish_asset_req.asset_artifact,
         nftData: publish_asset_req.asset_publish_description,
-        nftValue: publish_asset_req.asset_value as i32
+        nftValue: asset_value_float,
     };
 
     let mint_nft_response = match call_mint_nft_api(asset_creation_req) {

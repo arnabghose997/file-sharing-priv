@@ -10,7 +10,7 @@ pub struct MintNft {
     pub metadata: String,
     pub artifact: String,
     pub nftData:  String,
-    pub nftValue: i32,
+    pub nftValue: f64,
 }
 
 #[derive(Serialize, Deserialize)]

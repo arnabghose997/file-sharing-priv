@@ -38,7 +38,7 @@ type MintNFTData struct {
 	Metadata string `json:"metadata"`
 	Artifact string `json:"artifact"`
 	NftData  string `json:"nftData"`
-	NftValue string `json:"nftValuex"`
+	NftValue float64 `json:"nftValue"`
 }
 
 type deployNFTReq struct {
@@ -46,7 +46,7 @@ type deployNFTReq struct {
 	Did        string `json:"did"`
 	QuorumType int32  `json:"quorum_type"`
 	NftData    string `json:"nft_data"`
-	NftValue   string `json:"nft_value"`
+	NftValue   float64 `json:"nft_value"`
 }
 
 func NewDoMintNFTApiCall() *DoMintNFTApiCall {
