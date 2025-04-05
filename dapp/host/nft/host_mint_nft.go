@@ -269,7 +269,7 @@ func callDeployNFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorumT
 	/*
 		
 	*/
-	errDeadline := webSocketConn.SetReadDeadline(time.Now().Add(40 * time.Second))
+	errDeadline := webSocketConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
 	if errDeadline != nil {
 		return "", fmt.Errorf("error setting read deadline for web socket connection, err: %v", err)
 	}
