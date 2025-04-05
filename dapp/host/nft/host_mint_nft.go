@@ -225,6 +225,8 @@ func callDeployNFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorumT
 
 	msgPayloadBytes, _ := json.Marshal(msgPayload)
 
+
+
 	err := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
 	if err != nil {
 		return "", fmt.Errorf("error occured while invoking Deploy NFT, err: %v", err)
@@ -234,7 +236,7 @@ func callDeployNFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorumT
 	// 	fmt.Println("error in marshaling JSON:", err)
 	// 	return "", err
 	// }
-
+	
 	// deployNFTUrl, err := url.JoinPath(nodeAddress, "/api/deploy-nft")
 	// if err != nil {
 	// 	return "", err
@@ -272,7 +274,7 @@ func callDeployNFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorumT
 		return "", fmt.Errorf("unable to read response from web socket connection for Deploy NFT, err: %v", err)
 	}
 
-	
+	fmt.Println("Payload via websocket:", string(resultBytes))
 	var basicResponse *BasicResponse
 	if err := json.Unmarshal(resultBytes, &basicResponse); err != nil {
 		return "", fmt.Errorf("unable to unmarshal the results for DeployNFT API call, err: %v", err)
