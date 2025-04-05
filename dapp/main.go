@@ -53,7 +53,7 @@ func wrapSuccess(f func(code int, obj any), msg string) {
 }
 
 func handleUploadAsset(c *gin.Context) {
-	nodeAddress := "http://localhost:20009"
+	nodeAddress := "http://localhost:20011"
 	quorumType := 2
 
 	selfContractHashPath := path.Join("../artifacts/asset_publish_contract.wasm")
