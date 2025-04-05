@@ -28,7 +28,12 @@ func handleSocketConnection(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println("List of clients: ", TrieClientsMap)
+	_, msgOpen, err := conn.ReadMessage()
+	if err != nil {
+		fmt.Println("Error reading message when at OPEN phase :", err)
+	}
 
+	fmt.Println("Message received when at OPEN phase: ", string(msgOpen))
 	select {}
 }
 
