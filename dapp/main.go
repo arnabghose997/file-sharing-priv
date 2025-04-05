@@ -56,7 +56,7 @@ func handleUploadAsset(c *gin.Context) {
 	nodeAddress := "http://localhost:20009"
 	quorumType := 2
 
-	selfContractHashPath := path.Join("../artifact/asset_publish_contract.wasm")
+	selfContractHashPath := path.Join("../artifacts/asset_publish_contract.wasm")
 
 	var contractInputRequest ContractInputRequest
 
