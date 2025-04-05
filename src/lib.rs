@@ -12,7 +12,7 @@ use rubixwasm_std::contract_fn;
 
 #[derive(Serialize, Deserialize)]
 pub struct PublishAssetReq {
-    asset_artifiact: String,
+    asset_artifact: String,
     asset_metadata: String,
     asset_owner_did: String,
     asset_publish_description: String,
@@ -32,7 +32,7 @@ pub fn publish_asset(publish_asset_req: PublishAssetReq) -> Result<String, WasmE
     let asset_creation_req = MintNft {
         did: publish_asset_req.asset_owner_did.clone(),
         metadata: publish_asset_req.asset_metadata.clone(),
-        artifact: publish_asset_req.asset_artifiact,
+        artifact: publish_asset_req.asset_artifact,
         nftData: publish_asset_req.asset_publish_description,
         nftValue: publish_asset_req.asset_value as i32
     };

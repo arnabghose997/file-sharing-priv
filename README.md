@@ -12,7 +12,7 @@ Following is the format for Smart Contract input:
 
 ```json
 "publish_asset": {
-    "asset_artifiact": <path to AI model or Dataset file>,
+    "asset_artifact": <path to AI model or Dataset file>,
     "asset_metadata": <JSON file containing metadata information about AI model or Dataset>,
     "asset_owner_did": DID from Connected Xell Wallet,
     "asset_publish_description": Description string mentioning the intent of the action. In this case, we can write `AI Model/Dataset published and owned by <owner_did>`,
