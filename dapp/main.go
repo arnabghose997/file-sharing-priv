@@ -38,6 +38,7 @@ func main() {
 		handleSocketConnection(c.Writer, c.Request)
 	})
 	r.GET("/connected-clients", handleConnectedClients)
+	r.GET("/ping-client", handlePingClient)
 
 	r.Run(":8082")
 }
@@ -73,7 +74,7 @@ func handleUploadAsset(c *gin.Context) {
 	}
 
 	wasmCtx := wasmContext.NewWasmContext().WithExternalSocketConn(trieConn)
-	
+
 	// Create Import function registry
 	hostFnRegistry := wasmbridge.NewHostFunctionRegistry()
 	hostFnRegistry.Register(ft.NewDoTransferFTApiCall())

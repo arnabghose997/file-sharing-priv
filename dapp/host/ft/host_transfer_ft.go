@@ -3,12 +3,13 @@ package ft
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/bytecodealliance/wasmtime-go"
 	"github.com/gorilla/websocket"
+	"github.com/rubixchain/rubix-wasm/go-wasm-bridge/context"
 	"github.com/rubixchain/rubix-wasm/go-wasm-bridge/host"
 	"github.com/rubixchain/rubix-wasm/go-wasm-bridge/utils"
-	"github.com/rubixchain/rubix-wasm/go-wasm-bridge/context"
 )
 
 type TransferFTData struct {
@@ -26,7 +27,7 @@ type DoTransferFTApiCall struct {
 	memory      *wasmtime.Memory
 	nodeAddress string
 	quorumType  int
-	wasmCtx    *context.WasmContext
+	wasmCtx     *context.WasmContext
 }
 
 func NewDoTransferFTApiCall() *DoTransferFTApiCall {
@@ -61,7 +62,7 @@ func (h *DoTransferFTApiCall) Callback() host.HostFunctionCallBack {
 func callTransferFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorumType int, transferFTdata TransferFTData) error {
 	transferFTdata.QuorumType = int32(quorumType)
 
-	transferFTdataBytes, _ :=json.Marshal(transferFTdata)
+	transferFTdataBytes, _ := json.Marshal(transferFTdata)
 	var transferFTDataMap map[string]interface{} = make(map[string]interface{})
 
 	if err := json.Unmarshal(transferFTdataBytes, &transferFTDataMap); err != nil {
@@ -69,10 +70,9 @@ func callTransferFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorum
 	}
 
 	msgPayload := map[string]interface{}{
-		"clientId": transferFTdata.Sender,
 		"type": "OPEN_EXTENSION",
 		"data": &ExtensionCommand{
-			Action: "TRANSFER_FT",
+			Action:  "TRANSFER_FT",
 			Payload: transferFTDataMap,
 		},
 	}
@@ -109,6 +109,11 @@ func callTransferFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorum
 	// 	return err
 	// }
 	// defer resp.Body.Close()
+	errDeadline := webSocketConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
+	if errDeadline != nil {
+		return fmt.Errorf("error setting read deadline for web socket connection, err: %v", err)
+	}
+
 	_, resp, err := webSocketConn.ReadMessage()
 	if err != nil {
 		return fmt.Errorf("unable to read response from web socket connection for FT Transfer, err: %v", err)
@@ -128,14 +133,7 @@ func (h *DoTransferFTApiCall) callback(
 	caller *wasmtime.Caller,
 	args []wasmtime.Val,
 ) ([]wasmtime.Val, *wasmtime.Trap) {
-	trieServerSocketConnUrl := "ws://localhost:8080/ws"
-
-	trieServerSocketConn, _, err := websocket.DefaultDialer.Dial("ws://localhost:8080/ws", nil)
-	if err != nil {
-		errMsg := "unable to establish web socket connection to " + trieServerSocketConnUrl
-		fmt.Println(errMsg)
-		return utils.HandleError(errMsg)
-	}
+	trieServerSocketConn := h.wasmCtx.ExternalSocketConn()
 
 	// Validate the number of arguments
 	inputArgs, outputArgs := utils.HostFunctionParamExtraction(args, true, true)

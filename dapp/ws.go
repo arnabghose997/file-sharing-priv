@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
 
 func handleSocketConnection(w http.ResponseWriter, r *http.Request) {
@@ -23,17 +24,45 @@ func handleSocketConnection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, ok := TrieClientsMap[clientID]; !ok {
-		TrieClientsMap[clientID] = conn
-	}
-
 	fmt.Println("List of clients: ", TrieClientsMap)
+
+	conn.SetCloseHandler(func(code int, text string) error {
+		fmt.Println("Client disconnected (CLOSING): ", clientID)
+		delete(TrieClientsMap, clientID)
+		return nil
+	})
+
 	_, msgOpen, err := conn.ReadMessage()
 	if err != nil {
 		fmt.Println("Error reading message when at OPEN phase :", err)
+		delete(TrieClientsMap, clientID)
 	}
 
 	fmt.Println("Message received when at OPEN phase: ", string(msgOpen))
+	// go func() {
+	// 	ticker := time.NewTicker(4 * time.Second)
+	// 	defer ticker.Stop()
+	// 	for {
+	// 		select {
+	// 		case <-ticker.C:
+	// 			conn.SetWriteDeadline(time.Now().Add(4 * time.Second))
+	// 			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+	// 				log.Println("ping error:", err)
+	// 				return
+	// 			} else {
+	// 				fmt.Println("Ping sent successfully")
+	// 			}
+	// 		}
+	// 	}
+	// }()
+
+	// conn.SetPongHandler(func(appData string) error {
+	// 	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	// 	fmt.Println("Pong received: ", appData)
+	// 	return nil
+	// })
+
+	TrieClientsMap[clientID] = conn
 	select {}
 }
 
@@ -43,4 +72,25 @@ func handleConnectedClients(c *gin.Context) {
 		clientIDs = append(clientIDs, clientID)
 	}
 	c.JSON(http.StatusOK, clientIDs)
+}
+
+func handlePingClient(c *gin.Context) {
+	clientID := c.Query("clientID")
+	if clientID == "" {
+		c.JSON(http.StatusBadRequest, "clientID is required")
+		return
+	}
+
+	conn, ok := TrieClientsMap[clientID]
+	if !ok {
+		c.JSON(http.StatusNotFound, "Client not found")
+		return
+	}
+
+	err := conn.WriteMessage(websocket.PingMessage, []byte("ping"))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, fmt.Sprintf("Failed to send ping: %v", err))
+		return
+	}
+	c.JSON(http.StatusOK, "Ping sent successfully")
 }

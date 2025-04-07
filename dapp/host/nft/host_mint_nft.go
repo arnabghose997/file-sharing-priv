@@ -35,18 +35,18 @@ type DoMintNFTApiCall struct {
 }
 
 type MintNFTData struct {
-	Did      string `json:"did"`
-	Metadata string `json:"metadata"`
-	Artifact string `json:"artifact"`
-	NftData  string `json:"nftData"`
+	Did      string  `json:"did"`
+	Metadata string  `json:"metadata"`
+	Artifact string  `json:"artifact"`
+	NftData  string  `json:"nftData"`
 	NftValue float64 `json:"nftValue"`
 }
 
 type deployNFTReq struct {
-	Nft        string `json:"nft"`
-	Did        string `json:"did"`
-	QuorumType int32  `json:"quorum_type"`
-	NftData    string `json:"nft_data"`
+	Nft        string  `json:"nft"`
+	Did        string  `json:"did"`
+	QuorumType int32   `json:"quorum_type"`
+	NftData    string  `json:"nft_data"`
 	NftValue   float64 `json:"nft_value"`
 }
 
@@ -192,7 +192,6 @@ func callCreateNFTAPI(nodeAddress string, mintNFTdata MintNFTData) (string, erro
 	fmt.Println("Message in CreateNFT API:", basicResponse.Message)
 	fmt.Println("Result in CreateNFT API:", basicResponse.Result)
 
-
 	if basicResponse.Result == "" {
 		return "", fmt.Errorf("unable to fetch NFT ID after CreateNFT API call")
 	}
@@ -209,7 +208,7 @@ func callDeployNFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorumT
 	deployReq.NftData = mintNFTData.NftData
 	deployReq.NftValue = mintNFTData.NftValue
 
-	deployNFTdataBytes, _ :=json.Marshal(deployReq)
+	deployNFTdataBytes, _ := json.Marshal(deployReq)
 	var mintNFTDataMap map[string]interface{} = make(map[string]interface{})
 
 	if err := json.Unmarshal(deployNFTdataBytes, &mintNFTDataMap); err != nil {
@@ -219,25 +218,27 @@ func callDeployNFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorumT
 	msgPayload := map[string]interface{}{
 		"type": "OPEN_EXTENSION",
 		"data": &ExtensionCommand{
-			Action: "DEPLOY_NFT",
+			Action:  "DEPLOY_NFT",
 			Payload: mintNFTDataMap,
 		},
 	}
 
 	msgPayloadBytes, _ := json.Marshal(msgPayload)
 
-
-
 	err := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
 	if err != nil {
-		return "", fmt.Errorf("error occured while invoking Deploy NFT, err: %v", err)
+		time.Sleep(5 * time.Second)
+		err2 := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
+		if err2 != nil {
+			return "", fmt.Errorf("error occured while invoking Deploy NFT twice, err: %v", err2)
+		}
 	}
 	// bodyJSON, err := json.Marshal(deployReq)
 	// if err != nil {
 	// 	fmt.Println("error in marshaling JSON:", err)
 	// 	return "", err
 	// }
-	
+
 	// deployNFTUrl, err := url.JoinPath(nodeAddress, "/api/deploy-nft")
 	// if err != nil {
 	// 	return "", err
@@ -267,8 +268,8 @@ func callDeployNFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorumT
 	// var response map[string]interface{}
 
 	/*
-		
-	*/
+
+	 */
 	errDeadline := webSocketConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
 	if errDeadline != nil {
 		return "", fmt.Errorf("error setting read deadline for web socket connection, err: %v", err)
@@ -331,19 +332,19 @@ func (h *DoMintNFTApiCall) callback(
 		return utils.HandleError(errMsg)
 	}
 
-	responseStr := func () string {
+	responseStr := func() string {
 		var data = struct {
 			NftId string `json:"nftId"`
-			TxId string `json:"txId"`
-		} {
+			TxId  string `json:"txId"`
+		}{
 			NftId: nftID,
-			TxId: nftDeployTxID,
+			TxId:  nftDeployTxID,
 		}
 
 		dataBytes, _ := json.Marshal(data)
-		return string(dataBytes) 
+		return string(dataBytes)
 	}()
-	
+
 	err = utils.UpdateDataToWASM(caller, h.allocFunc, responseStr, outputArgs)
 	if err != nil {
 		fmt.Println("Failed to update data to WASM", err)
