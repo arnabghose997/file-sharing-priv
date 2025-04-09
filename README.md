@@ -112,3 +112,32 @@ Following is the format for Smart Contract input:
 ```
 
 NOTE: It should stringified before passed in the `/api/execute-smart-contract`
+
+# Asset Usage Contract
+
+## Setup
+
+1. /api/register-callback-url
+
+The url provided here would: `http://localhost:<port of dapp server>/api/use_asset`
+
+## Smart Contract Input
+
+Following is the format for Smart Contract input:
+
+```json
+"use_asset": {
+    "asset_usage_price": "(Whole Value, int) orignal value of NFT in TRIE",
+    "asset_user_did": "Xell connected DID",
+    "asset_usage_purpose": "Description string mentioning the intent of the action. In this case, we can write `AI Model/Dataset bought by <asset_user_did>",
+    "asset_denom": "TRIE",
+    "asset_owner_did": "The original owner of the NFT",
+    "asset_id": "NFT ID",
+    "asset_value": "(float) orignal value of NFT in RBT",
+
+    "ft_denom_creator": "DID of the creator of TRIE token",
+}
+```
+
+NOTE: It should stringified before passed in the `/api/execute-smart-contract`
+

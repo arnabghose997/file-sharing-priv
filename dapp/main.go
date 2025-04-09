@@ -44,6 +44,8 @@ func main() {
 	r.GET("/api/upload_asset/get_artifact_info_by_cid/:cid", handleUploadAsset_GetArtifactInfo)
 	r.GET("/api/upload_asset/get_artifact_file_name/:cid", handleUploadAsset_GetArtifactFileName)
 
+	r.POST("/api/use_asset", handleUseAsset)
+
 	r.Run(":8082")
 }
 
@@ -113,7 +115,7 @@ func handleUseAsset(c *gin.Context) {
 	nodeAddress := "http://localhost:20009"
 	quorumType := 2
 
-	selfContractHashPath := path.Join("../artifact/asset_publish_contract.wasm")
+	selfContractHashPath := path.Join("../artifact/asset_usage_contract.wasm")
 
 	var contractInputRequest ContractInputRequest
 
