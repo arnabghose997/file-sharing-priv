@@ -85,6 +85,11 @@ Following endpoints are added to facilitate the upload of NFT Artifact and Metad
         }
         ```
 
+4. GET: `http://localhost:8082/api/download_artifact/:<nftID>` - Download the artifact for a given NFT ID
+
+  - Param:
+    - `nftId`: Pass the nft ID here
+
 # Asset Publish Contract
 
 ## Setup

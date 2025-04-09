@@ -45,7 +45,8 @@ func main() {
 	r.GET("/api/upload_asset/get_artifact_file_name/:cid", handleUploadAsset_GetArtifactFileName)
 
 	r.POST("/api/use_asset", handleUseAsset)
-
+	r.GET("/api/download_artifact/:cid", handleDownloadArtifact)
+	
 	r.Run(":8082")
 }
 

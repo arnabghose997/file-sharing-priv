@@ -142,3 +142,34 @@ func handleUploadAsset_GetArtifactInfo(c *gin.Context) {
 	fmt.Println(base64EncodedMetadata)
 	getMetadataResult(c, base64EncodedMetadata)
 }
+
+func handleDownloadArtifact(c *gin.Context) {
+	assetCID := c.Param("cid")
+	if assetCID == "" {
+		getClientError(c, "cid is required, it came empty")
+		return
+	}
+
+	rubixNftDir := os.Getenv("RUBIX_NFT_DIR")
+	if rubixNftDir == "" {
+		getInternalError(c, "RUBIX_NFT_DIR environment variable not set")
+		return
+	}
+
+	assetDir := path.Join(rubixNftDir, assetCID)
+
+	entries, err := os.ReadDir(assetDir)
+	if err != nil {
+		getInternalError(c, fmt.Sprintf("failed to read asset metadata file: %v", err))
+		return
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() && entry.Name() != "metadata.json" {
+			c.File(path.Join(assetDir, entry.Name()))
+			return
+		}
+	}
+
+	getInternalError(c, fmt.Sprintf("no artifact file found for NFT ID %v", assetCID))
+}
