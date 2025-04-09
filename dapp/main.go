@@ -108,3 +108,59 @@ func handleUploadAsset(c *gin.Context) {
 		return
 	}
 }
+
+
+func handleUseAsset(c *gin.Context) {
+	nodeAddress := "http://localhost:20009"
+	quorumType := 2
+
+	selfContractHashPath := path.Join("../artifact/asset_publish_contract.wasm")
+
+	var contractInputRequest ContractInputRequest
+
+	err := json.NewDecoder(c.Request.Body).Decode(&contractInputRequest)
+	if err != nil {
+		wrapError(c.JSON, "err: Invalid request body")
+		return
+	}
+
+	trieConn, ok := TrieClientsMap[contractInputRequest.InitiatorDID]
+	if !ok {
+		wrapError(c.JSON, fmt.Sprintf("clientID %s not found", contractInputRequest.InitiatorDID))
+		return
+	}
+
+	wasmCtx := wasmContext.NewWasmContext().WithExternalSocketConn(trieConn)
+
+	// Create Import function registry
+	hostFnRegistry := wasmbridge.NewHostFunctionRegistry()
+	hostFnRegistry.Register(ft.NewDoTransferFTApiCall())
+	hostFnRegistry.Register(nft.NewDoExecuteNFT())
+
+	// Initialize the WASM module
+	wasmModule, err := wasmbridge.NewWasmModule(
+		selfContractHashPath,
+		hostFnRegistry,
+		wasmbridge.WithRubixNodeAddress(nodeAddress),
+		wasmbridge.WithQuorumType(quorumType),
+		wasmbridge.WithWasmContext(wasmCtx),
+	)
+	if err != nil {
+		wrapError(c.JSON, fmt.Sprintf("unable to initialize wasmModule: %v", err))
+		return
+	}
+
+	if contractInputRequest.SmartContractData == "" {
+		wrapError(c.JSON, fmt.Sprintf("unable to fetch Smart Contract from callback"))
+		return
+	}
+
+	ipfsHash, err := wasmModule.CallFunction(contractInputRequest.SmartContractData)
+	if err != nil {
+		wrapError(c.JSON, fmt.Sprintf("unable to execute function, err: %v", err))
+		return
+	}
+
+	// TODO: Send a websocket message to TRIE to handle the transaction
+	fmt.Println(ipfsHash)
+}
