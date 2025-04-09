@@ -60,6 +60,31 @@ Following endpoints are added to facilitate the upload of NFT Artifact and Metad
         }
         ```
 
+3. GET: `/api/upload_asset/get_artifact_file_name/:<nftID>` - Gets the name of artifact file for an NFT
+
+    - Params:
+        - `nftId`: Pass the NFT ID here
+         
+    - Example (Request):
+        ```bash        
+        curl --location --request GET 'http://localhost:8082/api/upload_asset/get_artifact_file_name/QmAb123' --header 'Content-Type: application/json'
+        ```
+    - Example (Response):
+        - Success:
+        ```json
+        {
+            "artifactFileName": "metadata.exe",
+            "status": true
+        }
+        ```
+        - Fail (invalid NFT ID):
+        ```json
+        {
+            "error": "no artifact file found for NFT ID QmAb123",
+            "status": false
+        }
+        ```
+
 # Asset Publish Contract
 
 ## Setup

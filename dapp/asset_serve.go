@@ -21,6 +21,10 @@ func getMetadataResult(c *gin.Context, artifactMetadata string) {
 	c.JSON(http.StatusOK, gin.H{"status": true, "artifactMetadata": artifactMetadata})
 }
 
+func getArtifactResult(c *gin.Context, artifactFileName string) {
+	c.JSON(http.StatusOK, gin.H{"status": true, "artifactFileName": artifactFileName})
+}
+
 func getInternalError(c *gin.Context, errMsg string) {
 	c.JSON(http.StatusInternalServerError, gin.H{"status": false, "error": errMsg})
 }
@@ -68,7 +72,38 @@ func handleUploadAsset_UploadArtifacts(c *gin.Context) {
 	getResult(c, assetFilePath, metadataFilePath)
 }
 
-func handleUploadAsset_GetArtifacts(c *gin.Context) {
+func handleUploadAsset_GetArtifactFileName(c *gin.Context) {
+	assetCID := c.Param("cid")
+	if assetCID == "" {
+		getClientError(c, "cid is required, it came empty")
+		return
+	}
+
+	rubixNftDir := os.Getenv("RUBIX_NFT_DIR")
+	if rubixNftDir == "" {
+		getInternalError(c, "RUBIX_NFT_DIR environment variable not set")
+		return
+	}
+
+	assetMetadataDir := path.Join(rubixNftDir, assetCID)
+
+	entries, err := os.ReadDir(assetMetadataDir)
+	if err != nil {
+		getInternalError(c, fmt.Sprintf("failed to read asset metadata file: %v", err))
+		return
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() && entry.Name() != "metadata.json" {
+			getArtifactResult(c, entry.Name())
+			return
+		}
+	}
+
+	getInternalError(c, fmt.Sprintf("no artifact file found for NFT ID %v", assetCID))
+}
+
+func handleUploadAsset_GetArtifactInfo(c *gin.Context) {
 	assetCID := c.Param("cid")
 	if assetCID == "" {
 		getClientError(c, "cid is required, it came empty")

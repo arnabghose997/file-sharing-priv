@@ -39,11 +39,11 @@ func main() {
 	r.GET("/connected-clients", handleConnectedClients)
 	r.GET("/ping-client", handlePingClient)
 
-
 	r.POST("/api/upload_asset", handleUploadAsset)
 	r.POST("/api/upload_asset/upload_artifacts", handleUploadAsset_UploadArtifacts)
-	r.GET("/api/upload_asset/get_artifact_info_by_cid/:cid", handleUploadAsset_GetArtifacts)
-	
+	r.GET("/api/upload_asset/get_artifact_info_by_cid/:cid", handleUploadAsset_GetArtifactInfo)
+	r.GET("/api/upload_asset/get_artifact_file_name/:cid", handleUploadAsset_GetArtifactFileName)
+
 	r.Run(":8082")
 }
 
@@ -108,7 +108,6 @@ func handleUploadAsset(c *gin.Context) {
 		return
 	}
 }
-
 
 func handleUseAsset(c *gin.Context) {
 	nodeAddress := "http://localhost:20009"
