@@ -33,13 +33,17 @@ func enableCors(w *http.ResponseWriter) {
 func main() {
 	r := gin.Default()
 
-	r.POST("/api/upload_asset", handleUploadAsset)
 	r.GET("/ws", func(c *gin.Context) {
 		handleSocketConnection(c.Writer, c.Request)
 	})
 	r.GET("/connected-clients", handleConnectedClients)
 	r.GET("/ping-client", handlePingClient)
 
+
+	r.POST("/api/upload_asset", handleUploadAsset)
+	r.POST("/api/upload_asset/upload_artifacts", handleUploadAsset_UploadArtifacts)
+	r.GET("/api/upload_asset/get_artifact_info_by_cid/:cid", handleUploadAsset_GetArtifacts)
+	
 	r.Run(":8082")
 }
 
