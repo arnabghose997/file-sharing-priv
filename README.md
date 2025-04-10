@@ -90,6 +90,8 @@ Following endpoints are added to facilitate the upload of NFT Artifact and Metad
   - Param:
     - `nftId`: Pass the nft ID here
 
+5. GET: `http://localhost:8082/api/onboarded_providers` - Get a list of Infra providers (Based on the `provider_info.json` file present under `dapp` directory)
+
 # Asset Publish Contract
 
 ## Setup
