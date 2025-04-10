@@ -117,10 +117,10 @@ func handleUploadAsset(c *gin.Context) {
 }
 
 func handleUseAsset(c *gin.Context) {
-	nodeAddress := "http://localhost:20009"
+	nodeAddress := "http://localhost:20011"
 	quorumType := 2
 
-	selfContractHashPath := path.Join("../artifact/asset_usage_contract.wasm")
+	selfContractHashPath := path.Join("../artifacts/asset_usage_contract.wasm")
 
 	var contractInputRequest ContractInputRequest
 
