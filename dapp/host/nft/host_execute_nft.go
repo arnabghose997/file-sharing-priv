@@ -84,7 +84,11 @@ func callExecuteNFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorum
 
 	err := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
 	if err != nil {
-		return fmt.Errorf("error occured while invoking FT Transfer, err: %v", err)
+		time.Sleep(5 * time.Second)
+		err2 := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
+		if err2 != nil {
+			return fmt.Errorf("error occured while invoking NFT Execute twice, err: %v", err2)
+		}
 	}
 
 	errDeadline := webSocketConn.SetReadDeadline(time.Now().Add(5 * time.Minute))

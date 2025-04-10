@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 )
 
 const HOSTING_LIST_INFO = "./asset_holding_list_info.json"
@@ -77,4 +78,20 @@ func writeJSON(data HostingFileInfo) error {
 	}
 
 	return nil
+}
+
+type successMsg = string
+type failMsg = string
+
+func extractSignatureVerificationOutput(msg string) (successMsg, failMsg) {
+	msgPrefix := "msg: "
+	errPrefix := ", err: "
+
+	msgStart := len(msgPrefix)
+	msgEnd := strings.Index(msg, errPrefix)
+
+	message := msg[msgStart:msgEnd]
+	errorMsg := msg[msgEnd+len(errPrefix):]
+
+	return strings.TrimSpace(message), strings.TrimSpace(errorMsg)
 }

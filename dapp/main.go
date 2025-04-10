@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"path"
 
 	"github.com/gin-gonic/gin"
@@ -46,7 +47,10 @@ func main() {
 
 	r.POST("/api/use_asset", handleUseAsset)
 	r.GET("/api/download_artifact/:cid", handleDownloadArtifact)
-	
+
+	r.POST("/api/onboard_infra_provider", handleUserOnboarding)
+	r.GET("/api/onboarded_providers", handleOnboardedProviders)
+
 	r.Run(":8082")
 }
 
@@ -165,4 +169,82 @@ func handleUseAsset(c *gin.Context) {
 
 	// TODO: Send a websocket message to TRIE to handle the transaction
 	fmt.Println(ipfsHash)
+}
+
+func handleUserOnboarding(c *gin.Context) {
+	nodeAddress := "http://localhost:20011"
+	quorumType := 2
+
+	selfContractHashPath := path.Join("../artifacts/onboarding_contract.wasm")
+
+	var contractInputRequest ContractInputRequest
+
+	err := json.NewDecoder(c.Request.Body).Decode(&contractInputRequest)
+	if err != nil {
+		wrapError(c.JSON, "err: Invalid request body")
+		return
+	}
+
+	// Create Import function registry
+	hostFnRegistry := wasmbridge.NewHostFunctionRegistry()
+
+	// Initialize the WASM module
+	wasmModule, err := wasmbridge.NewWasmModule(
+		selfContractHashPath,
+		hostFnRegistry,
+		wasmbridge.WithRubixNodeAddress(nodeAddress),
+		wasmbridge.WithQuorumType(quorumType),
+	)
+	if err != nil {
+		wrapError(c.JSON, fmt.Sprintf("unable to initialize wasmModule: %v", err))
+		return
+	}
+
+	if contractInputRequest.SmartContractData == "" {
+		wrapError(c.JSON, fmt.Sprintf("unable to fetch Smart Contract from callback"))
+		return
+	}
+
+	contractResult, err := wasmModule.CallFunction(contractInputRequest.SmartContractData)
+	if err != nil {
+		wrapError(c.JSON, fmt.Sprintf("unable to execute function, err: %v", err))
+		return
+	}
+
+	msg, errMsg := extractSignatureVerificationOutput(contractResult)
+	if errMsg != "" {
+		wrapError(c.JSON, fmt.Sprintf("error occured while verifying the signature, err: %v", errMsg))
+		return
+	}
+
+	switch msg {
+	case "Success":
+		wrapSuccess(c.JSON, "signature is valid")
+		return
+	case "Fail":
+		wrapSuccess(c.JSON, "signature is invalid")
+		return
+	default:
+		wrapError(c.JSON, fmt.Sprintf("unexected error occured while retrieving the signature verification result, msg val extracted: %v", msg))
+	}
+}
+
+func handleOnboardedProviders(c *gin.Context) {
+	providerInfoPath := "./provider_info.json"
+
+	providerInfo, err := os.ReadFile(providerInfoPath)
+	if err != nil {
+		getInternalError(c, fmt.Sprintf("failed to read provider_info.json file, err: %v", err))
+		return
+	}
+
+	var providerInfoMap []map[string]interface{}
+	err = json.Unmarshal(providerInfo, &providerInfoMap)
+	if err != nil {
+		getInternalError(c, fmt.Sprintf("failed to unmarshal provider_info.json file, err: %v", err))
+		return
+	}
+
+
+	c.JSON(200, providerInfoMap)
 }

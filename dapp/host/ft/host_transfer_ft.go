@@ -81,6 +81,11 @@ func callTransferFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorum
 
 	err := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
 	if err != nil {
+		time.Sleep(5 * time.Second)
+		err2 := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
+		if err2 != nil {
+			return fmt.Errorf("error occured while invoking FT transfer twice, err: %v", err2)
+		}
 		return fmt.Errorf("error occured while invoking FT Transfer, err: %v", err)
 	}
 	// bodyJSON, err := json.Marshal(transferFTdata)

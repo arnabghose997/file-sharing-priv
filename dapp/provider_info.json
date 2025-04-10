@@ -1,0 +1,18 @@
+[
+ {
+  "storage": "400GB",
+  "memory": "16GB",
+  "os": "Ubuntu",
+  "core": "4",
+  "processor": "Intel Xeon",
+  "providerDid": ""
+ },
+ {
+  "storage": "410GB",
+  "memory": "16GB",
+  "os": "Ubuntu",
+  "core": "4",
+  "processor": "Intel Xeon",
+  "providerDid": "bafybmi123.."
+ }
+]
