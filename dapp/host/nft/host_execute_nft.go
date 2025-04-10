@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/bytecodealliance/wasmtime-go"
+	"github.com/rubixchain/rubix-wasm/go-wasm-bridge/context"
 	"github.com/rubixchain/rubix-wasm/go-wasm-bridge/host"
 	"github.com/rubixchain/rubix-wasm/go-wasm-bridge/utils"
-	"github.com/rubixchain/rubix-wasm/go-wasm-bridge/context"
 
 	"github.com/gorilla/websocket"
 	wasmContext "github.com/rubixchain/rubix-wasm/go-wasm-bridge/context"
@@ -16,7 +16,7 @@ import (
 
 type ExecuteNFTReq struct {
 	NFT        string  `json:"nft"`
-	Owner      string  `json:"owner"`
+	Executor   string  `json:"executor"`
 	Receiver   string  `json:"receiver"`
 	Comment    string  `json:"comment"`
 	NFTValue   float64 `json:"nft_value"`
