@@ -73,6 +73,9 @@ func handleUploadAsset_UploadArtifacts(c *gin.Context) {
 }
 
 func handleUploadAsset_GetArtifactFileName(c *gin.Context) {
+	w := http.ResponseWriter(c.Writer)
+	enableCors(&w)
+
 	assetCID := c.Param("cid")
 	if assetCID == "" {
 		getClientError(c, "cid is required, it came empty")
@@ -104,6 +107,9 @@ func handleUploadAsset_GetArtifactFileName(c *gin.Context) {
 }
 
 func handleUploadAsset_GetArtifactInfo(c *gin.Context) {
+	w := http.ResponseWriter(c.Writer)
+	enableCors(&w)
+
 	assetCID := c.Param("cid")
 	if assetCID == "" {
 		getClientError(c, "cid is required, it came empty")
@@ -144,6 +150,9 @@ func handleUploadAsset_GetArtifactInfo(c *gin.Context) {
 }
 
 func handleDownloadArtifact(c *gin.Context) {
+	w := http.ResponseWriter(c.Writer)
+	enableCors(&w)
+	
 	assetCID := c.Param("cid")
 	if assetCID == "" {
 		getClientError(c, "cid is required, it came empty")
