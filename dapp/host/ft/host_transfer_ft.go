@@ -133,11 +133,16 @@ FTTransferWriteMessage:
 		}
 	}
 
-	var response map[string]interface{}
+	var response *BasicResponse
 	err3 := json.Unmarshal(resp, &response)
 	if err3 != nil {
 		fmt.Println("Error unmarshaling response:", err3)
 		return err3
+	}
+
+	if !response.Status  {
+		fmt.Println("error in response for FT: %s", response.Message)
+		return fmt.Errorf("error in response for FT: %s", response.Message)
 	}
 
 	return err3
