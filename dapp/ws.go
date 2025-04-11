@@ -66,23 +66,6 @@ func handleSocketConnection(w http.ResponseWriter, r *http.Request) {
 
 	TrieClientsMap[clientID] = conn
 
-	go func() {
-		// send a unsolicited pong frame every 15 seconds
-		ticker := time.NewTicker(15 * time.Second)
-		for {
-			select {
-			case <-ticker.C:
-				err := conn.WriteMessage(websocket.PongMessage, nil)
-				if err != nil {
-					log.Fatal(fmt.Sprintf("error sending unsolicited pong: %v", err))
-					return
-				} else {
-					log.Println("Unsolicited pong sent successfully")
-				}
-			}
-		}
-	}()
-	
 	select {}
 }
 
