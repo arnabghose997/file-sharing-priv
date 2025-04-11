@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"log"
 
 	"github.com/bytecodealliance/wasmtime-go"
 	"github.com/gorilla/websocket"
@@ -227,10 +228,19 @@ func callDeployNFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorumT
 
 	err := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
 	if err != nil {
-		time.Sleep(5 * time.Second)
+		log.Printf("retry attempt 1: error occured while invoking Deploy NFT, err: %v\n", err)
+		time.Sleep(10 * time.Second)
+		
 		err2 := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
 		if err2 != nil {
-			return "", fmt.Errorf("error occured while invoking Deploy NFT twice, err: %v", err2)
+			log.Printf("retry attempt 2: error occured while invoking Deploy NFT, err: %v\n", err)
+			time.Sleep(10 * time.Second)
+			
+			err3 := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
+			if err3 != nil {
+				log.Println("error occured while invoking Deploy NFT thrice, err: %v", err3)
+				return "", fmt.Errorf("error occured while invoking Deploy NFT thrice, err: %v", err3)
+			}
 		}
 	}
 	// bodyJSON, err := json.Marshal(deployReq)
