@@ -60,6 +60,7 @@ func (h *DoTransferFTApiCall) Callback() host.HostFunctionCallBack {
 	return h.callback
 }
 func callTransferFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorumType int, transferFTdata TransferFTData) error {
+	fmt.Println("LOG: call from contract to do Transfer FT")
 	transferFTdata.QuorumType = int32(quorumType)
 
 	transferFTdataBytes, _ := json.Marshal(transferFTdata)
@@ -137,6 +138,8 @@ FTTransferWriteMessage:
 			return fmt.Errorf("unable to read response from web socket connection for FT Transfer, err: %v", err)
 		}
 	}
+
+	fmt.Println("LOG: Websocket Response received from FT Transfer API:", string(resp))
 
 	var response *BasicResponse
 	err3 := json.Unmarshal(resp, &response)
