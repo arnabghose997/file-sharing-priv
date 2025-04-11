@@ -94,7 +94,11 @@ ExecuteNFTWriteMessage:
 		time.Sleep(10 * time.Second)
 		err2 := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
 		if err2 != nil {
-			return fmt.Errorf("error occured while invoking NFT Execute twice, err: %v", err2)
+			time.Sleep(10 * time.Second)
+			err3 := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
+			if err3 != nil {
+				return fmt.Errorf("error occured while invoking NFT Execute thrice, err: %v", err3)
+			}
 		}
 	}
 

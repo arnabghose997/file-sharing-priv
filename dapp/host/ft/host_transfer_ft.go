@@ -90,7 +90,12 @@ FTTransferWriteMessage:
 		time.Sleep(10 * time.Second)
 		err2 := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
 		if err2 != nil {
-			return fmt.Errorf("error occured while invoking FT transfer twice, err: %v", err2)
+			time.Sleep(10 * time.Second)
+			err3 := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
+			if err3 != nil {
+				fmt.Printf("error occured while invoking FT transfer twice, err: %v", err3)
+				return fmt.Errorf("error occured while invoking FT transfer twice, err: %v", err3)
+			}
 		}
 	}
 	// bodyJSON, err := json.Marshal(transferFTdata)
