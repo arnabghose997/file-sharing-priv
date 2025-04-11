@@ -225,7 +225,14 @@ func callDeployNFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorumT
 	}
 
 	msgPayloadBytes, _ := json.Marshal(msgPayload)
+	var readRetryCount int = 0
 
+	errDeadline := webSocketConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
+	if errDeadline != nil {
+		return "", fmt.Errorf("error setting read deadline for web socket connection, err: %v", errDeadline)
+	}
+
+WriteMessageLabel:
 	err := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
 	if err != nil {
 		log.Printf("retry attempt 1: error occured while invoking Deploy NFT, err: %v\n", err)
@@ -280,14 +287,19 @@ func callDeployNFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorumT
 	/*
 
 	 */
-	errDeadline := webSocketConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
-	if errDeadline != nil {
-		return "", fmt.Errorf("error setting read deadline for web socket connection, err: %v", err)
-	}
+	
 
+	
 	_, resultBytes, err := webSocketConn.ReadMessage()
 	if err != nil {
-		return "", fmt.Errorf("unable to read response from web socket connection for Deploy NFT, err: %v", err)
+		readRetryCount++
+		if readRetryCount < 3 {
+			log.Printf("retry attempt %d: unable to read response from web socket connection for Deploy NFT, err: %v\n", readRetryCount, err)
+			time.Sleep(300 * time.Millisecond)
+			goto WriteMessageLabel
+		} else {
+			return "", fmt.Errorf("unable to read response from web socket connection for Deploy NFT, err: %v", err)
+		}
 	}
 
 	fmt.Println("Payload via websocket:", string(resultBytes))

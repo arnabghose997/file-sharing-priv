@@ -68,6 +68,11 @@ func callTransferFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorum
 	if err := json.Unmarshal(transferFTdataBytes, &transferFTDataMap); err != nil {
 		return fmt.Errorf("error unmarshalling transferFTdataBytes: %v", err)
 	}
+	var readRetryCount int = 0
+	errDeadline := webSocketConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
+	if errDeadline != nil {
+		return fmt.Errorf("error setting read deadline for web socket connection, err: %v", errDeadline)
+	}
 
 	msgPayload := map[string]interface{}{
 		"type": "OPEN_EXTENSION",
@@ -79,14 +84,14 @@ func callTransferFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorum
 
 	msgPayloadBytes, _ := json.Marshal(msgPayload)
 
+FTTransferWriteMessage:
 	err := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
 	if err != nil {
-		time.Sleep(5 * time.Second)
+		time.Sleep(10 * time.Second)
 		err2 := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
 		if err2 != nil {
 			return fmt.Errorf("error occured while invoking FT transfer twice, err: %v", err2)
 		}
-		return fmt.Errorf("error occured while invoking FT Transfer, err: %v", err)
 	}
 	// bodyJSON, err := json.Marshal(transferFTdata)
 	// if err != nil {
@@ -114,14 +119,18 @@ func callTransferFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorum
 	// 	return err
 	// }
 	// defer resp.Body.Close()
-	errDeadline := webSocketConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
-	if errDeadline != nil {
-		return fmt.Errorf("error setting read deadline for web socket connection, err: %v", err)
-	}
+	
 
 	_, resp, err := webSocketConn.ReadMessage()
 	if err != nil {
-		return fmt.Errorf("unable to read response from web socket connection for FT Transfer, err: %v", err)
+		readRetryCount++
+		if readRetryCount < 3 {
+			fmt.Printf("retrying to read message from web socket connection for FT Transfer, err: %v", err)
+			time.Sleep(200 * time.Millisecond)
+			goto FTTransferWriteMessage
+		} else {
+			return fmt.Errorf("unable to read response from web socket connection for FT Transfer, err: %v", err)
+		}
 	}
 
 	var response map[string]interface{}

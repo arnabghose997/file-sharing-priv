@@ -79,26 +79,36 @@ func callExecuteNFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorum
 			Payload: executeNFTDataMap,
 		},
 	}
+	var readRetryCount int = 0
+
+	errDeadline := webSocketConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
+	if errDeadline != nil {
+		return fmt.Errorf("error setting read deadline for web socket connection, err: %v", errDeadline)
+	}
 
 	msgPayloadBytes, _ := json.Marshal(msgPayload)
 
+ExecuteNFTWriteMessage:
 	err := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
 	if err != nil {
-		time.Sleep(5 * time.Second)
+		time.Sleep(10 * time.Second)
 		err2 := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
 		if err2 != nil {
 			return fmt.Errorf("error occured while invoking NFT Execute twice, err: %v", err2)
 		}
 	}
 
-	errDeadline := webSocketConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
-	if errDeadline != nil {
-		return fmt.Errorf("error setting read deadline for web socket connection, err: %v", err)
-	}
 
 	_, _, err = webSocketConn.ReadMessage()
 	if err != nil {
-		return fmt.Errorf("unable to read response from web socket connection for Deploy NFT, err: %v", err)
+		readRetryCount++
+		if readRetryCount < 3 {
+			fmt.Printf("retrying to read message from web socket connection for Execute NFT, err: %v", err)
+			time.Sleep(200 * time.Millisecond)
+			goto ExecuteNFTWriteMessage
+		} else {
+			return fmt.Errorf("unable to read response from web socket connection for Execute NFT, err: %v", err)
+		}
 	}
 
 	return err
@@ -133,8 +143,8 @@ func (h *DoExecuteNFT) callback(
 	}
 	callExecuteNFTAPIRespErr := callExecuteNFTAPI(trieSocketConn, h.nodeAddress, h.quorumType, executeNFTData)
 	if callExecuteNFTAPIRespErr != nil {
-		fmt.Println("failed to transfer NFT", callExecuteNFTAPIRespErr)
-		errMsg := "failed to transfer NFT" + callExecuteNFTAPIRespErr.Error()
+		fmt.Println("failed to execute NFT", callExecuteNFTAPIRespErr)
+		errMsg := "failed to execute NFT" + callExecuteNFTAPIRespErr.Error()
 		return utils.HandleError(errMsg)
 	}
 
