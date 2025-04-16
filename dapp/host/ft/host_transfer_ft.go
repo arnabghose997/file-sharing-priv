@@ -3,7 +3,6 @@ package ft
 import (
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/bytecodealliance/wasmtime-go"
 	"github.com/gorilla/websocket"
@@ -69,11 +68,11 @@ func callTransferFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorum
 	if err := json.Unmarshal(transferFTdataBytes, &transferFTDataMap); err != nil {
 		return fmt.Errorf("error unmarshalling transferFTdataBytes: %v", err)
 	}
-	var readRetryCount int = 0
-	errDeadline := webSocketConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
-	if errDeadline != nil {
-		return fmt.Errorf("error setting read deadline for web socket connection, err: %v", errDeadline)
-	}
+
+	// errDeadline := webSocketConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
+	// if errDeadline != nil {
+	// 	return fmt.Errorf("error setting read deadline for web socket connection, err: %v", errDeadline)
+	// }
 
 	msgPayload := map[string]interface{}{
 		"type": "OPEN_EXTENSION",
@@ -85,61 +84,15 @@ func callTransferFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorum
 
 	msgPayloadBytes, _ := json.Marshal(msgPayload)
 
-FTTransferWriteMessage:
 	err := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
 	if err != nil {
-		time.Sleep(10 * time.Second)
-		err2 := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
-		if err2 != nil {
-			time.Sleep(10 * time.Second)
-			err3 := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
-			if err3 != nil {
-				fmt.Printf("error occured while invoking FT transfer twice, err: %v", err3)
-				return fmt.Errorf("error occured while invoking FT transfer twice, err: %v", err3)
-			}
-		}
+		return fmt.Errorf("error occured while invoking FT transfer twice, err: %v", err)
 	}
-	// bodyJSON, err := json.Marshal(transferFTdata)
-	// if err != nil {
-	// 	fmt.Println("Error marshaling JSON:", err)
-	// 	return err
-	// }
-
-	// transferFTUrl, err := url.JoinPath(nodeAddress, "/api/initiate-ft-transfer")
-	// if err != nil {
-	// 	return err
-	// }
-
-	// req, err := http.NewRequest("POST", transferFTUrl, bytes.NewBuffer(bodyJSON))
-	// if err != nil {
-	// 	fmt.Println("Error creating HTTP request:", err)
-	// 	return err
-	// }
-
-	// req.Header.Set("Content-Type", "application/json; charset=UTF-8")
-
-	// client := &http.Client{}
-	// resp, err := client.Do(req)
-	// if err != nil {
-	// 	fmt.Println("Error sending HTTP request:", err)
-	// 	return err
-	// }
-	// defer resp.Body.Close()
-	
 
 	_, resp, err := webSocketConn.ReadMessage()
 	if err != nil {
-		readRetryCount++
-		if readRetryCount < 3 {
-			fmt.Printf("retrying to read message from web socket connection for FT Transfer, err: %v", err)
-			time.Sleep(200 * time.Millisecond)
-			goto FTTransferWriteMessage
-		} else {
-			return fmt.Errorf("unable to read response from web socket connection for FT Transfer, err: %v", err)
-		}
+		return fmt.Errorf("unable to read response from web socket connection for FT Transfer, err: %v", err)
 	}
-
-	fmt.Println("LOG: Websocket Response received from FT Transfer API:", string(resp))
 
 	var response *BasicResponse
 	err3 := json.Unmarshal(resp, &response)
@@ -148,7 +101,7 @@ FTTransferWriteMessage:
 		return err3
 	}
 
-	if !response.Status  {
+	if !response.Status {
 		fmt.Println("error in response for FT: %s", response.Message)
 		return fmt.Errorf("error in response for FT: %s", response.Message)
 	}

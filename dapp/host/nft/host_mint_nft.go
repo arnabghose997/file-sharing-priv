@@ -5,14 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"time"
 
 	// "io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
-	"log"
 
 	"github.com/bytecodealliance/wasmtime-go"
 	"github.com/gorilla/websocket"
@@ -225,81 +223,20 @@ func callDeployNFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorumT
 	}
 
 	msgPayloadBytes, _ := json.Marshal(msgPayload)
-	var readRetryCount int = 0
 
-	errDeadline := webSocketConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
-	if errDeadline != nil {
-		return "", fmt.Errorf("error setting read deadline for web socket connection, err: %v", errDeadline)
-	}
+	// errDeadline := webSocketConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
+	// if errDeadline != nil {
+	// 	return "", fmt.Errorf("error setting read deadline for web socket connection, err: %v", errDeadline)
+	// }
 
-WriteMessageLabel:
 	err := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
 	if err != nil {
-		log.Printf("retry attempt 1: error occured while invoking Deploy NFT, err: %v\n", err)
-		time.Sleep(10 * time.Second)
-		
-		err2 := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
-		if err2 != nil {
-			log.Printf("retry attempt 2: error occured while invoking Deploy NFT, err: %v\n", err)
-			time.Sleep(10 * time.Second)
-			
-			err3 := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
-			if err3 != nil {
-				log.Println("error occured while invoking Deploy NFT thrice, err: %v", err3)
-				return "", fmt.Errorf("error occured while invoking Deploy NFT thrice, err: %v", err3)
-			}
-		}
+		return "", fmt.Errorf("error occured while invoking Deploy NFT thrice, err: %v", err)
 	}
-	// bodyJSON, err := json.Marshal(deployReq)
-	// if err != nil {
-	// 	fmt.Println("error in marshaling JSON:", err)
-	// 	return "", err
-	// }
 
-	// deployNFTUrl, err := url.JoinPath(nodeAddress, "/api/deploy-nft")
-	// if err != nil {
-	// 	return "", err
-	// }
-
-	// req, err := http.NewRequest("POST", deployNFTUrl, bytes.NewBuffer(bodyJSON))
-	// if err != nil {
-	// 	fmt.Println("Error creating HTTP request:", err)
-	// 	return "", err
-	// }
-	// req.Header.Set("Content-Type", "application/json; charset=UTF-8")
-
-	// client := &http.Client{}
-	// resp, err := client.Do(req)
-	// if err != nil {
-	// 	fmt.Println("Error sending HTTP request:", err)
-	// 	return "", err
-	// }
-	// fmt.Println("Response Status:", resp.Status)
-	// data2, err := io.ReadAll(resp.Body)
-	// if err != nil {
-	// 	fmt.Printf("Error reading response body: %s\n", err)
-	// 	return "", err
-	// }
-	// // Process the data as needed
-	// fmt.Println("Response Body in DeployNft :", string(data2))
-	// var response map[string]interface{}
-
-	/*
-
-	 */
-	
-
-	
 	_, resultBytes, err := webSocketConn.ReadMessage()
 	if err != nil {
-		readRetryCount++
-		if readRetryCount < 3 {
-			log.Printf("retry attempt %d: unable to read response from web socket connection for Deploy NFT, err: %v\n", readRetryCount, err)
-			time.Sleep(300 * time.Millisecond)
-			goto WriteMessageLabel
-		} else {
-			return "", fmt.Errorf("unable to read response from web socket connection for Deploy NFT, err: %v", err)
-		}
+		return "", fmt.Errorf("unable to read response from web socket connection for Deploy NFT, err: %v", err)
 	}
 
 	fmt.Println("Payload via websocket:", string(resultBytes))

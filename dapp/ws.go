@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -26,7 +28,13 @@ func handleSocketConnection(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("List of clients: ", TrieClientsMap)
 
+	if tcpConn, ok := conn.UnderlyingConn().(*net.TCPConn); ok {
+		tcpConn.SetKeepAlive(true)
+		tcpConn.SetKeepAlivePeriod(20 * time.Second)
+	}
+
 	conn.SetCloseHandler(func(code int, text string) error {
+		defer conn.Close()
 		fmt.Println("Client disconnected (CLOSING): ", clientID)
 		delete(TrieClientsMap, clientID)
 		return nil
@@ -56,6 +64,10 @@ func handleSocketConnection(w http.ResponseWriter, r *http.Request) {
 	// 	}
 	// }()
 
+	conn.SetPingHandler(func(appData string) error {
+		fmt.Println(fmt.Sprintf("Ping received: %v\n", appData))
+		return nil
+	})
 	// conn.SetPongHandler(func(appData string) error {
 	// 	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 	// 	fmt.Println("Pong received: ", appData)

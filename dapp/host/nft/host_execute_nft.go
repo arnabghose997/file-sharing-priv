@@ -3,7 +3,6 @@ package nft
 import (
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/bytecodealliance/wasmtime-go"
 	"github.com/rubixchain/rubix-wasm/go-wasm-bridge/context"
@@ -79,40 +78,22 @@ func callExecuteNFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorum
 			Payload: executeNFTDataMap,
 		},
 	}
-	var readRetryCount int = 0
 
-	errDeadline := webSocketConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
-	if errDeadline != nil {
-		return fmt.Errorf("error setting read deadline for web socket connection, err: %v", errDeadline)
-	}
+	// errDeadline := webSocketConn.SetReadDeadline(time.Now().Add(5 * time.Minute))
+	// if errDeadline != nil {
+	// 	return fmt.Errorf("error setting read deadline for web socket connection, err: %v", errDeadline)
+	// }
 
 	msgPayloadBytes, _ := json.Marshal(msgPayload)
 
-ExecuteNFTWriteMessage:
 	err := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
 	if err != nil {
-		time.Sleep(10 * time.Second)
-		err2 := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
-		if err2 != nil {
-			time.Sleep(10 * time.Second)
-			err3 := webSocketConn.WriteMessage(websocket.TextMessage, msgPayloadBytes)
-			if err3 != nil {
-				return fmt.Errorf("error occured while invoking NFT Execute thrice, err: %v", err3)
-			}
-		}
+		return fmt.Errorf("error occured while invoking NFT Execute thrice, err: %v", err)
 	}
-
 
 	_, _, err = webSocketConn.ReadMessage()
 	if err != nil {
-		readRetryCount++
-		if readRetryCount < 3 {
-			fmt.Printf("retrying to read message from web socket connection for Execute NFT, err: %v", err)
-			time.Sleep(200 * time.Millisecond)
-			goto ExecuteNFTWriteMessage
-		} else {
-			return fmt.Errorf("unable to read response from web socket connection for Execute NFT, err: %v", err)
-		}
+		return fmt.Errorf("unable to read response from web socket connection for Execute NFT, err: %v", err)
 	}
 
 	return err

@@ -51,6 +51,38 @@ func main() {
 	r.POST("/api/onboard_infra_provider", handleUserOnboarding)
 	r.GET("/api/onboarded_providers", handleOnboardedProviders)
 
+	// DEBUG
+	r.POST("/api/debug", func(c *gin.Context) {
+		type DebugRequest struct {
+			Did string `json:"did"`
+			P1 string `json:"p1"`
+			P2 string `json:"p2"`
+		}
+
+		var debugRequest *DebugRequest
+		err := json.NewDecoder(c.Request.Body).Decode(&debugRequest)
+		if err != nil {
+			wrapError(c.JSON, "err: Invalid request body")
+			return
+		}
+
+		conn := TrieClientsMap[debugRequest.Did]
+		if conn == nil {
+			wrapError(c.JSON, fmt.Sprintf("clientID %s not found", debugRequest.Did))
+			return
+		}
+
+		debugRequestMarshalled, _ := json.Marshal(debugRequest)
+
+		err = conn.WriteMessage(websocket.TextMessage, debugRequestMarshalled)
+		if err != nil {
+			wrapError(c.JSON, fmt.Sprintf("error writing message to client %s: %v", debugRequest.Did, err))
+			return
+		}
+		
+		c.JSON(200, gin.H{"message": "Debug endpoint"})
+	})
+
 	r.Run(":8082")
 }
 
