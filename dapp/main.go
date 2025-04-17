@@ -97,7 +97,7 @@ func wrapSuccess(f func(code int, obj any), msg string) {
 }
 
 func handleUploadAsset(c *gin.Context) {
-	nodeAddress := "http://localhost:20011"
+	nodeAddress := "http://localhost:20004"
 	quorumType := 2
 
 	selfContractHashPath := path.Join("../artifacts/asset_publish_contract.wasm")
@@ -149,7 +149,7 @@ func handleUploadAsset(c *gin.Context) {
 }
 
 func handleUseAsset(c *gin.Context) {
-	nodeAddress := "http://localhost:20011"
+	nodeAddress := "http://localhost:20004"
 	quorumType := 2
 
 	selfContractHashPath := path.Join("../artifacts/asset_usage_contract.wasm")
@@ -262,6 +262,9 @@ func handleUserOnboarding(c *gin.Context) {
 }
 
 func handleOnboardedProviders(c *gin.Context) {
+	w := http.ResponseWriter(c.Writer)
+	enableCors(&w)
+
 	providerInfoPath := "./provider_info.json"
 
 	providerInfo, err := os.ReadFile(providerInfoPath)
