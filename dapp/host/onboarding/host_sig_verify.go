@@ -67,20 +67,7 @@ func (h *VerifyAction) callback(
 ) ([]wasmtime.Val, *wasmtime.Trap) {
 	_, outputArgs := utils.HostFunctionParamExtraction(args, false, true)
 
-	didPath := os.Getenv("DID_PATH")
-	if didPath == "" {
-		fmt.Println("unable to load DID Path")
-		return utils.HandleError("unable to load DID Path")
-	}
-
-	selfContractHash := os.Getenv("SELF_CONTRACT_HASH")
-	if selfContractHash == "" {
-		fmt.Println("unable to load Self Contract Hash")
-		return utils.HandleError("unable to load Self Contract Hash")
-	}
-
-	// Open
-	smartContractInfo, err := getSmartContractInfo(h.nodeAddress, selfContractHash)
+	smartContractInfo, err := getSmartContractInfo(h.nodeAddress, ONBOARDING_CONTRACT_ADDRESS)
 	if err != nil {
 		errMsg := fmt.Sprintf("failed to get smart contract info, err: %v", err)
 		fmt.Println(errMsg)
@@ -99,7 +86,7 @@ func (h *VerifyAction) callback(
 		return utils.HandleError(err.Error())
 	}
 
-	completeDidPath := path.Join(didPath, executorDID, "pubKey.pem")
+	completeDidPath := path.Join(DID_DIR, executorDID, "pubKey.pem")
 
 	executorPubKey, err := getPubKeyFromFile(completeDidPath, executorDID)
 	if err != nil {

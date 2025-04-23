@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path"
@@ -76,6 +77,8 @@ func getClientError(c *gin.Context, errMsg string) {
 func handleUploadAsset_UploadArtifacts(c *gin.Context) {
 	w := http.ResponseWriter(c.Writer)
 	enableCors(&w)
+
+	log.Printf("Request Content-Length: %d bytes", c.Request.ContentLength)
 
 	// Get the multipart form
 	form, err := c.MultipartForm()

@@ -7,12 +7,18 @@ import (
 )
 
 type ProviderInfo struct {
-	Storage     string `json:"storage"`
-	Memory      string `json:"memory"`
-	OS          string `json:"os"`
-	Core        string `json:"core"`
-	Processor   string `json:"processor"`
-	ProviderDid string `json:"providerDid"`
+	Storage          string `json:"storage"`
+	Memory           string `json:"memory"`
+	OS               string `json:"os"`
+	Core             string `json:"core"`
+	GPU              string `json:"gpu"`
+	Region           string `json:"region"`
+	PlatformName     string `json:"platformName"`
+	PlatformImageUri string `json:"platformImageUri"`
+	Processor        string `json:"processor"`
+	ProviderDid      string `json:"providerDid"`
+	HostingCost      string `json:"hostingCost"`
+	TrainingCost     string `json:"trainingCost"`
 }
 
 func StoreDepinProviderInfo(provider *ProviderInfo) error {

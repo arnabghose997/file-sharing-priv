@@ -204,7 +204,7 @@ func handleUseAsset(c *gin.Context) {
 }
 
 func handleUserOnboarding(c *gin.Context) {
-	nodeAddress := "http://localhost:20011"
+	nodeAddress := "http://localhost:20004"
 	quorumType := 2
 
 	selfContractHashPath := path.Join("../artifacts/onboarding_contract.wasm")
