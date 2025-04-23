@@ -2,3 +2,5 @@ target/
 uploads/
 
 .env
+
+dapp/provider_info.json

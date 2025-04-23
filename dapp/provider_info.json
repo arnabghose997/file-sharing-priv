@@ -1,18 +1,58 @@
 [
  {
-  "storage": "400GB",
+  "storage": "500GB",
   "memory": "16GB",
   "os": "Ubuntu",
   "core": "4",
+  "gpu": "Nividia",
+  "region": "N.virginia",
+  "platformName": "AWS",
+  "platformImageUri": "",
   "processor": "Intel Xeon",
-  "providerDid": ""
+  "providerDid": "bafybmialabl2a23voctghw2i2unny3h5flztwt2obr6t44jd2mpuna4m4m",
+  "hostingCost": 1,
+  "trainingCost": 1
  },
  {
-  "storage": "410GB",
-  "memory": "16GB",
-  "os": "Ubuntu",
-  "core": "4",
+  "storage": "1TB",
+  "memory": "32GB",
+  "os": "Linux",
+  "core": "8",
+  "gpu": "Nividia",
+  "region": "California",
+  "platformName": "AWS",
+  "platformImageUri": "",
   "processor": "Intel Xeon",
-  "providerDid": "bafybmi123.."
+  "providerDid": "bafybmie4d45biuv35ywa4gvmltmc5mocngsyxutjpfyw7bs4pr2cz73ir4",
+  "hostingCost": 1,
+  "trainingCost": 1
+ },
+ {
+  "storage": "200GB",
+  "memory": "8GB",
+  "os": "Windows Server",
+  "core": "2",
+  "gpu": "AMD",
+  "region": "Singapore",
+  "platformName": "Azure",
+  "platformImageUri": "",
+  "processor": "AMD Ryzen",
+  "providerDid": "bafybmic2iqiuslmkgo3ju6mvdoh4dl7ogl4tsjwptd7sljz6qx6m7i4oni",
+  "hostingCost": 1,
+  "trainingCost": 1
+ },
+ {
+  "storage": "2TB",
+  "memory": "64GB",
+  "os": "Ubuntu",
+  "core": "16",
+  "gpu": "Nividia",
+  "region": "Frankfurt",
+  "platformName": "Google Cloud",
+  "platformImageUri": "",
+  "processor": "Intel Xeon",
+  "providerDid": "bafybmifwrzh5rrwt5o7tmvpsxuxy6do6eltijkss65rjhqtzsrn6gu73bi",
+  "hostingCost": 1,
+  "trainingCost": 1
  }
 ]

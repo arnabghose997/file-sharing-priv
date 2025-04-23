@@ -3,6 +3,7 @@ package main
 import (
 	"dapp/host/ft"
 	"dapp/host/nft"
+	"dapp/host/onboarding"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -219,7 +220,7 @@ func handleUserOnboarding(c *gin.Context) {
 
 	// Create Import function registry
 	hostFnRegistry := wasmbridge.NewHostFunctionRegistry()
-
+	hostFnRegistry.Register(onboarding.NewVerifyAction())
 	// Initialize the WASM module
 	wasmModule, err := wasmbridge.NewWasmModule(
 		selfContractHashPath,

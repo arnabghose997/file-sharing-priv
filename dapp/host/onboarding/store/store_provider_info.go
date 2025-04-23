@@ -17,8 +17,8 @@ type ProviderInfo struct {
 	PlatformImageUri string `json:"platformImageUri"`
 	Processor        string `json:"processor"`
 	ProviderDid      string `json:"providerDid"`
-	HostingCost      string `json:"hostingCost"`
-	TrainingCost     string `json:"trainingCost"`
+	HostingCost      int `json:"hostingCost"`
+	TrainingCost     int `json:"trainingCost"`
 }
 
 func StoreDepinProviderInfo(provider *ProviderInfo) error {
@@ -29,7 +29,20 @@ func StoreDepinProviderInfo(provider *ProviderInfo) error {
 		return fmt.Errorf("unable to read provider info list, err: %v", err)
 	}
 
-	providerList = append(providerList, provider)
+	// Check if an existing record for a provider DID exists or not
+	// If yes, then edit the record
+	existingRecord := false
+	for idx, existingProvider := range providerList {
+		if provider.ProviderDid == existingProvider.ProviderDid {
+			providerList[idx] = provider
+			existingRecord = true
+		}
+	}
+	
+	if !existingRecord {
+		providerList = append(providerList, provider)
+	}
+
 	providerListBytes, err := json.MarshalIndent(providerList, "", " ")
 	if err != nil {
 		return fmt.Errorf("unable to marshal provider list, err: %v", err)
