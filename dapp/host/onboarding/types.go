@@ -1,7 +1,7 @@
 package onboarding
 
-const ONBOARDING_CONTRACT_ADDRESS = ""
-const DID_DIR = ""
+const ONBOARDING_CONTRACT_ADDRESS = "QmWGd62Mt82YwaVmHwLnRcWsVmnruPKPkd42BfuDwopkYt"
+const DID_DIR = "/home/ubuntu/arnabnode/node7/Rubix/TestNetDID"
 
 type SmartContractResponse struct {
 	BasicResponse
