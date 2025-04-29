@@ -52,38 +52,6 @@ func main() {
 	r.POST("/api/onboard_infra_provider", handleUserOnboarding)
 	r.GET("/api/onboarded_providers", handleOnboardedProviders)
 
-	// DEBUG
-	r.POST("/api/debug", func(c *gin.Context) {
-		type DebugRequest struct {
-			Did string `json:"did"`
-			P1 string `json:"p1"`
-			P2 string `json:"p2"`
-		}
-
-		var debugRequest *DebugRequest
-		err := json.NewDecoder(c.Request.Body).Decode(&debugRequest)
-		if err != nil {
-			wrapError(c.JSON, "err: Invalid request body")
-			return
-		}
-
-		conn := TrieClientsMap[debugRequest.Did]
-		if conn == nil {
-			wrapError(c.JSON, fmt.Sprintf("clientID %s not found", debugRequest.Did))
-			return
-		}
-
-		debugRequestMarshalled, _ := json.Marshal(debugRequest)
-
-		err = conn.WriteMessage(websocket.TextMessage, debugRequestMarshalled)
-		if err != nil {
-			wrapError(c.JSON, fmt.Sprintf("error writing message to client %s: %v", debugRequest.Did, err))
-			return
-		}
-		
-		c.JSON(200, gin.H{"message": "Debug endpoint"})
-	})
-
 	r.Run(":8082")
 }
 
@@ -98,7 +66,7 @@ func wrapSuccess(f func(code int, obj any), msg string) {
 }
 
 func handleUploadAsset(c *gin.Context) {
-	nodeAddress := "http://localhost:20004"
+	nodeAddress := "http://localhost:20007"
 	quorumType := 2
 
 	selfContractHashPath := path.Join("../artifacts/asset_publish_contract.wasm")
@@ -150,7 +118,7 @@ func handleUploadAsset(c *gin.Context) {
 }
 
 func handleUseAsset(c *gin.Context) {
-	nodeAddress := "http://localhost:20004"
+	nodeAddress := "http://localhost:20007"
 	quorumType := 2
 
 	selfContractHashPath := path.Join("../artifacts/asset_usage_contract.wasm")
@@ -205,7 +173,7 @@ func handleUseAsset(c *gin.Context) {
 }
 
 func handleUserOnboarding(c *gin.Context) {
-	nodeAddress := "http://localhost:20004"
+	nodeAddress := "http://localhost:20007"
 	quorumType := 2
 
 	selfContractHashPath := path.Join("../artifacts/onboarding_contract.wasm")
