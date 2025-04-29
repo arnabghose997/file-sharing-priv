@@ -12,7 +12,7 @@
       "providerName": "AWS support team",
       "platformImageUri": "",
       "platformDescription": "aws infra providers",
-      "providerDid": "bafybmialabl2a23voctghw2i2unny3h5flztwt2obr6t44jd2mpuna4m4m"
+      "providerDid": "bafybmid54eptkxvegqm43lpyngjz3v4n5h67mka2lueeuixdhjw254eeqi"
     },
     {
       "storage": "1TB",
@@ -27,7 +27,7 @@
       "providerName": "AWS support team",
       "platformImageUri": "",
       "platformDescription": "aws infra providers",
-      "providerDid": "bafybmie4d45biuv35ywa4gvmltmc5mocngsyxutjpfyw7bs4pr2cz73ir4"
+      "providerDid": "bafybmigohe5h67w2ybdelyskcp53ffquipj2eq4rsnrwpidgiyb4ekkkeq"
     },
     {
       "storage": "200GB",
@@ -42,7 +42,7 @@
       "providerName": "Azure support team",
       "platformImageUri": "",
       "platformDescription": "Microsoft Azure cloud infrastructure",
-      "providerDid": "bafybmic2iqiuslmkgo3ju6mvdoh4dl7ogl4tsjwptd7sljz6qx6m7i4oni"
+      "providerDid": "bafybmichrkqcjt2z7mkqmn53a4wmdpmz7i7mbs67i7ms6k2mhdci25rxpq"
     },
     {
       "storage": "2TB",
@@ -57,6 +57,6 @@
       "providerName": "Google Cloud support team",
       "platformImageUri": "",
       "platformDescription": "Google Cloud platform infrastructure",
-      "providerDid": "bafybmifwrzh5rrwt5o7tmvpsxuxy6do6eltijkss65rjhqtzsrn6gu73bi"
+      "providerDid": "bafybmidkmt5vsygdiecbmjdsfcwz52j4lp3r4xuswkjwjs3kot5gbotaby"
     }
   ]
