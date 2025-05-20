@@ -17,9 +17,9 @@ import (
 	"github.com/bytecodealliance/wasmtime-go"
 
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/rubixchain/rubix-wasm/go-wasm-bridge/context"
 	"github.com/rubixchain/rubix-wasm/go-wasm-bridge/host"
 	"github.com/rubixchain/rubix-wasm/go-wasm-bridge/utils"
-	"github.com/rubixchain/rubix-wasm/go-wasm-bridge/context"
 	rubixCrypto "github.com/rubixchain/rubixgoplatform/crypto"
 
 	"dapp/host/onboarding/store"

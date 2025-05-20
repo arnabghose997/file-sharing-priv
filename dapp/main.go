@@ -52,6 +52,9 @@ func main() {
 	r.POST("/api/onboard_infra_provider", handleUserOnboarding)
 	r.GET("/api/onboarded_providers", handleOnboardedProviders)
 
+	// NEW ENDPOINT FOR CREATE TOKEN
+	r.POST("/api/create_token", handleCreateToken)
+
 	r.Run(":8082")
 }
 
@@ -91,6 +94,7 @@ func handleUploadAsset(c *gin.Context) {
 	hostFnRegistry := wasmbridge.NewHostFunctionRegistry()
 	hostFnRegistry.Register(ft.NewDoTransferFTApiCall())
 	hostFnRegistry.Register(nft.NewDoMintNFTApiCall())
+	hostFnRegistry.Register(ft.NewDoCreateFTApiCall())
 
 	// Initialize the WASM module
 	wasmModule, err := wasmbridge.NewWasmModule(
@@ -143,6 +147,7 @@ func handleUseAsset(c *gin.Context) {
 	hostFnRegistry := wasmbridge.NewHostFunctionRegistry()
 	hostFnRegistry.Register(ft.NewDoTransferFTApiCall())
 	hostFnRegistry.Register(nft.NewDoExecuteNFT())
+	hostFnRegistry.Register(ft.NewDoCreateFTApiCall())
 
 	// Initialize the WASM module
 	wasmModule, err := wasmbridge.NewWasmModule(
@@ -170,6 +175,61 @@ func handleUseAsset(c *gin.Context) {
 
 	// TODO: Send a websocket message to TRIE to handle the transaction
 	fmt.Println(ipfsHash)
+}
+
+// NEW HANDLER FOR CREATE TOKEN
+func handleCreateToken(c *gin.Context) {
+	nodeAddress := "http://localhost:20007"
+	quorumType := 2
+
+	// Use the existing WASM file that contains CREATE_FT functionality
+	selfContractHashPath := path.Join("../artifacts/asset_publish_contract.wasm")
+
+	var contractInputRequest ContractInputRequest
+
+	err := json.NewDecoder(c.Request.Body).Decode(&contractInputRequest)
+	if err != nil {
+		wrapError(c.JSON, "err: Invalid request body")
+		return
+	}
+
+	trieConn, ok := TrieClientsMap[contractInputRequest.InitiatorDID]
+	if !ok {
+		wrapError(c.JSON, fmt.Sprintf("clientID %s not found", contractInputRequest.InitiatorDID))
+		return
+	}
+
+	wasmCtx := wasmContext.NewWasmContext().WithExternalSocketConn(trieConn)
+
+	// Create Import function registry - only register what's needed for token creation
+	hostFnRegistry := wasmbridge.NewHostFunctionRegistry()
+	hostFnRegistry.Register(ft.NewDoCreateFTApiCall())
+
+	// Initialize the WASM module
+	wasmModule, err := wasmbridge.NewWasmModule(
+		selfContractHashPath,
+		hostFnRegistry,
+		wasmbridge.WithRubixNodeAddress(nodeAddress),
+		wasmbridge.WithQuorumType(quorumType),
+		wasmbridge.WithWasmContext(wasmCtx),
+	)
+	if err != nil {
+		wrapError(c.JSON, fmt.Sprintf("unable to initialize wasmModule: %v", err))
+		return
+	}
+
+	if contractInputRequest.SmartContractData == "" {
+		wrapError(c.JSON, fmt.Sprintf("unable to fetch Smart Contract from callback"))
+		return
+	}
+
+	result, err := wasmModule.CallFunction(contractInputRequest.SmartContractData)
+	if err != nil {
+		wrapError(c.JSON, fmt.Sprintf("unable to execute function, err: %v", err))
+		return
+	}
+
+	wrapSuccess(c.JSON, result)
 }
 
 func handleUserOnboarding(c *gin.Context) {
@@ -248,7 +308,6 @@ func handleOnboardedProviders(c *gin.Context) {
 		getInternalError(c, fmt.Sprintf("failed to unmarshal provider_info.json file, err: %v", err))
 		return
 	}
-
 
 	c.JSON(200, providerInfoMap)
 }
