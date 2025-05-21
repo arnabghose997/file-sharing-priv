@@ -183,7 +183,7 @@ func handleCreateToken(c *gin.Context) {
 	quorumType := 2
 
 	// Use the existing WASM file that contains CREATE_FT functionality
-	selfContractHashPath := path.Join("../artifacts/asset_publish_contract.wasm")
+	selfContractHashPath := path.Join("../artifacts/asset_create_ft.wasm")
 
 	var contractInputRequest ContractInputRequest
 
@@ -192,6 +192,7 @@ func handleCreateToken(c *gin.Context) {
 		wrapError(c.JSON, "err: Invalid request body")
 		return
 	}
+	fmt.Println("The value fo Initator DID: ", contractInputRequest.InitiatorDID)
 
 	trieConn, ok := TrieClientsMap[contractInputRequest.InitiatorDID]
 	if !ok {
