@@ -1,16 +1,10 @@
 package nft
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 
 	// "io/ioutil"
-	"mime/multipart"
-	"net/http"
-	"net/url"
-	"os"
 
 	"github.com/bytecodealliance/wasmtime-go"
 	"github.com/gorilla/websocket"
@@ -35,8 +29,7 @@ type DoMintNFTApiCall struct {
 
 type MintNFTData struct {
 	Did      string  `json:"did"`
-	Metadata string  `json:"metadata"`
-	Artifact string  `json:"artifact"`
+	AssetId  string  `json:"assetId"`
 	NftData  string  `json:"nftData"`
 	NftValue float64 `json:"nftValue"`
 }
@@ -81,128 +74,11 @@ func (h *DoMintNFTApiCall) Callback() host.HostFunctionCallBack {
 	return h.callback
 }
 
-func callCreateNFTAPI(nodeAddress string, mintNFTdata MintNFTData) (string, error) {
-	var requestBody bytes.Buffer
-
-	// Create a new multipart writer
-	writer := multipart.NewWriter(&requestBody)
-
-	// Add form fields (simple text fields)
-	writer.WriteField("did", mintNFTdata.Did)
-	// writer.WriteField("UserId", mintNFTdata.Userid)
-
-	// Add the NFTFile to the form
-	fmt.Println("Artifact name is:", mintNFTdata.Artifact)
-	nftArtifact, err := os.Open(mintNFTdata.Artifact)
-	if err != nil {
-		fmt.Println("Error opening Artifact file:", err)
-		return "", err
-	}
-	defer nftArtifact.Close()
-
-	// Add the NFTFile part to the form
-	nftArtifactFile, err := writer.CreateFormFile("artifact", mintNFTdata.Artifact)
-	if err != nil {
-		fmt.Println("Error creating NFT Artifact file:", err)
-		return "", err
-	}
-
-	_, err = io.Copy(nftArtifactFile, nftArtifact)
-	if err != nil {
-		fmt.Println("Error copying NFT file content:", err)
-		// return []wasmtime.Val{wasmtime.ValI32(1)}, wasmtime.NewTrap(fmt.Sprintf("Error copying NFT file content: %v\n", err))
-		return "", err
-	}
-
-	// Add the NFTFileInfo to the form
-	fmt.Println("Metadata file name is:", mintNFTdata.Metadata)
-	metadataFileInfo, err := os.Open(mintNFTdata.Metadata)
-	if err != nil {
-		fmt.Println("Error opening Metadata file:", err)
-		// return []wasmtime.Val{wasmtime.ValI32(1)}, wasmtime.NewTrap(fmt.Sprintf("Error opening NFTFileInfo file: %v\n", err))
-		return "", err
-	}
-	defer metadataFileInfo.Close()
-
-	// Add the NFTFileInfo part to the form
-	metadataFile, err := writer.CreateFormFile("metadata", mintNFTdata.Metadata)
-	if err != nil {
-		fmt.Println("Error creating NFTFileInfo form file:", err)
-		// return []wasmtime.Val{wasmtime.ValI32(1)}, wasmtime.NewTrap(fmt.Sprintf("Error creating NFTFileInfo form file: %v\n", err))
-		return "", err
-	}
-
-	_, err = io.Copy(metadataFile, metadataFileInfo)
-	if err != nil {
-		fmt.Println("Error copying NFTFileInfo content:", err)
-		return "", err
-	}
-
-	// Close the writer to finalize the form data
-	err = writer.Close()
-	if err != nil {
-		fmt.Println("Error closing multipart writer:", err)
-		return "", err
-	}
-
-	// Create the request URL
-	url, err := url.JoinPath(nodeAddress, "/api/create-nft")
-	if err != nil {
-		fmt.Println("Error forming url path for Create NFT API, err: ", err)
-		return "", err
-	}
-
-	// Create a new HTTP request
-	req, err := http.NewRequest("POST", url, &requestBody)
-	if err != nil {
-		fmt.Println("Error creating HTTP request:", err)
-		// return []wasmtime.Val{wasmtime.ValI32(1)}, wasmtime.NewTrap(fmt.Sprintf("Failed to create HTTP request: %v\n", err))
-		return "", err
-	}
-
-	// Set the Content-Type header to multipart/form-data with the correct boundary
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-
-	// Send the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println("Error sending HTTP request in generateToken fun:", err)
-		// return []wasmtime.Val{wasmtime.ValI32(1)}, wasmtime.NewTrap(fmt.Sprintf("Error sending http request: %v\n", err))
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	// Read and print the response body
-	createNFTAPIResponse, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading response body:", err)
-		// return []wasmtime.Val{wasmtime.ValI32(1)}, wasmtime.NewTrap(fmt.Sprintf("Failed to read response body: %v\n", err))
-		return "", err
-	}
-
-	var basicResponse *BasicResponse
-	if err := json.Unmarshal(createNFTAPIResponse, &basicResponse); err != nil {
-		return "", err
-	}
-
-	fmt.Println("Response Body in CreateNFT API:", basicResponse)
-	fmt.Println("Status in CreateNFT API:", basicResponse.Status)
-	fmt.Println("Message in CreateNFT API:", basicResponse.Message)
-	fmt.Println("Result in CreateNFT API:", basicResponse.Result)
-
-	if basicResponse.Result == "" {
-		return "", fmt.Errorf("unable to fetch NFT ID after CreateNFT API call")
-	}
-
-	return basicResponse.Result, nil
-}
-
-func callDeployNFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorumType int, mintNFTData MintNFTData, nftId string) (string, error) {
+func callDeployNFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorumType int, mintNFTData MintNFTData) (string, error) {
 	var deployReq deployNFTReq
 
 	deployReq.Did = mintNFTData.Did
-	deployReq.Nft = nftId
+	deployReq.Nft = mintNFTData.AssetId
 	deployReq.QuorumType = int32(quorumType)
 	deployReq.NftData = mintNFTData.NftData
 	deployReq.NftValue = mintNFTData.NftValue
@@ -279,13 +155,7 @@ func (h *DoMintNFTApiCall) callback(
 		return utils.HandleError(errMsg)
 	}
 
-	nftID, err := callCreateNFTAPI(h.nodeAddress, mintNFTData)
-	if err != nil {
-		errMsg := "Create NFT API failed" + err.Error()
-		return utils.HandleError(errMsg)
-	}
-
-	nftDeployTxID, errDeploy := callDeployNFTAPI(trieServerSocketConnUrl, h.nodeAddress, h.quorumType, mintNFTData, nftID)
+	nftDeployTxID, errDeploy := callDeployNFTAPI(trieServerSocketConnUrl, h.nodeAddress, h.quorumType, mintNFTData)
 	if errDeploy != nil {
 		errMsg := "Deploy NFT API failed" + errDeploy.Error()
 		return utils.HandleError(errMsg)
@@ -296,7 +166,7 @@ func (h *DoMintNFTApiCall) callback(
 			NftId string `json:"nftId"`
 			TxId  string `json:"txId"`
 		}{
-			NftId: nftID,
+			NftId: mintNFTData.AssetId,
 			TxId:  nftDeployTxID,
 		}
 
