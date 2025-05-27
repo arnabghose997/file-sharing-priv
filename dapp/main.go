@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 
@@ -54,6 +55,10 @@ func main() {
 
 	// NEW ENDPOINT FOR CREATE TOKEN
 	r.POST("/api/create_token", handleCreateToken)
+
+	// Metrics
+	r.GET("/metrics/asset_count", handleMetricsAssetCount)
+	r.GET("/metrics/transaction_count", handleMetricsTransactionCount)
 
 	r.Run(":8082")
 }
@@ -311,4 +316,95 @@ func handleOnboardedProviders(c *gin.Context) {
 	}
 
 	c.JSON(200, providerInfoMap)
+}
+
+func handleMetricsAssetCount(c *gin.Context) {
+	w := http.ResponseWriter(c.Writer)
+	enableCors(&w)
+
+	targetURL, _ := url.JoinPath(RUBIX_API, "/api/list-nfts")
+
+	response, err := queryRubixNode(targetURL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to fetch NFT tokens: %v", err)})
+		return
+	}
+
+	var assetCountResponse AssetCountResponse
+
+	if err := json.Unmarshal([]byte(response), &assetCountResponse); err != nil {
+		fmt.Printf("Unable to unmarshal request for /api/list-nfts, err: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"asset_count": 0})
+		return
+	}
+
+	aiModelCount := 0
+	datasetCount := 0
+
+	rubixNftDir := os.Getenv("RUBIX_NFT_DIR")
+	if rubixNftDir == "" {
+		getInternalError(c, "RUBIX_NFT_DIR environment variable not set")
+		return
+	}
+
+	for _, nft := range assetCountResponse.Nfts {
+		assetMetadataDir := path.Join(rubixNftDir, nft.Nft, "metadata.json")
+
+		assetMetadataObj, err := os.ReadFile(assetMetadataDir)
+		if err != nil {
+			getInternalError(c, fmt.Sprintf("failed to read asset metadata file: %v", err))
+			continue
+		}
+
+		if len(assetMetadataObj) == 0 {
+			getInternalError(c, fmt.Sprintf("metadata file for NFT ID %v is empty", nft.Nft))
+			return
+		}
+
+		var intf struct {
+			Type string `json:"type"`
+		}
+
+		if err := json.Unmarshal(assetMetadataObj, &intf); err != nil {
+			getInternalError(c, fmt.Sprintf("unable to unmarshal metadata JSON: %v", err))
+			return
+		}
+
+		if intf.Type == "model" {
+			aiModelCount++
+		} else if intf.Type == "dataset" {
+			datasetCount++
+		} else {
+			fmt.Printf("Unknown asset type for NFT ID %s: %s\n", nft.Nft, intf.Type)
+		}
+	}
+
+	assetCount := aiModelCount + datasetCount
+	c.JSON(http.StatusOK, gin.H{"asset_count": assetCount, "ai_model_count": aiModelCount, "dataset_count": datasetCount})
+}
+
+func handleMetricsTransactionCount(c *gin.Context) {
+	nfts, err := listNFTs()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to fetch NFT tokens: %v", err)})
+		return
+	}
+
+	var totalTransactionCount int = 0
+
+	for _, nftId := range nfts {
+		transactions, err := listNFTTransactionsByID(nftId)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to fetch NFT transactions for %s: %v", nftId, err)})
+			return
+		}
+		if !transactions.Status {
+			fmt.Println(transactions.Message)
+		}
+
+		totalTransactionCount += len(transactions.NFTDataReply)
+	}
+
+	// Send the JSON response
+	c.JSON(http.StatusOK, gin.H{"transaction_count": totalTransactionCount})
 }
