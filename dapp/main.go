@@ -129,7 +129,7 @@ func GetRatingsFromChain(c *gin.Context) {
 
 }
 
-const RATING_CONTRACT_HASH = "QmeywD5LVUpZ1TiirMtAR8YyAb3suLdEUETJxkKwhUWHW8"
+const RATING_CONTRACT_HASH = "QmfEkQvWcLZEghJ1swffQg9nxcnT13j6xLiB3CqPXUvfg2"
 
 func GetRatingFromChain(assetID string) (float64, error) {
 	reqBody := SmartContractDataRequest{
@@ -144,7 +144,7 @@ func GetRatingFromChain(assetID string) (float64, error) {
 
 	fmt.Printf("Sending request body to Rubix: %s\n", string(bodyBytes))
 
-	resp, err := http.Post("http://localhost:20000/api/get-smart-contract-token-chain-data", "application/json", bytes.NewBuffer(bodyBytes))
+	resp, err := http.Post("http://localhost:20007/api/get-smart-contract-token-chain-data", "application/json", bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		return 0, err
 	}
@@ -433,7 +433,7 @@ func handleUserOnboarding(c *gin.Context) {
 		wrapSuccess(c.JSON, "signature is invalid")
 		return
 	default:
-		wrapError(c.JSON, fmt.Sprintf("unexected error occured while retrieving the signature verification result, msg val extracted: %v", msg))
+		wrapError(c.JSON, fmt.Sprintf("unexpected error occured while retrieving the signature verification result, msg val extracted: %v", msg))
 	}
 }
 
