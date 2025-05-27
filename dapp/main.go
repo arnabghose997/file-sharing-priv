@@ -117,13 +117,15 @@ func GetRatingsFromChain(c *gin.Context) {
 
     avg, err := GetRatingFromChain(assetID)
     if err != nil {
-        wrapError(c.JSON, err.Error())
+		fmt.Println(err.Error())
+		c.JSON(200, gin.H{
+			"average_rating": 0.0,
+		})
         return
     }
     roundedAvg := RoundToPrecision(avg, 2, 1)
 
 	c.JSON(200, gin.H{
-		"asset_id": assetID,
 		"average_rating": roundedAvg,
 	})
 
