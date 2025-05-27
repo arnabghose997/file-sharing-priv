@@ -1,15 +1,18 @@
 package main
 
 import (
+	"bytes"
 	"dapp/host/ft"
 	"dapp/host/nft"
 	"dapp/host/onboarding"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
+	"math"
 	"net/http"
 	"os"
 	"path"
-
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	wasmbridge "github.com/rubixchain/rubix-wasm/go-wasm-bridge"
@@ -55,6 +58,8 @@ func main() {
 	// NEW ENDPOINT FOR CREATE TOKEN
 	r.POST("/api/create_token", handleCreateToken)
 
+	r.GET("/api/get_rating_by_asset", GetRatingsFromChain)
+
 	r.Run(":8082")
 }
 
@@ -66,6 +71,147 @@ func wrapError(f func(code int, obj any), msg string) {
 func wrapSuccess(f func(code int, obj any), msg string) {
 	fmt.Println(msg)
 	f(200, gin.H{"message": msg})
+}
+type SmartContractDataReply struct {
+	BlockNo            int    `json:"BlockNo"`
+	BlockId            string `json:"BlockId"`
+	SmartContractData  string `json:"SmartContractData"`
+	Epoch              int64  `json:"Epoch"`
+	InitiatorSignature string `json:"InitiatorSignature"`
+	ExecutorDID        string `json:"ExecutorDID"`
+	InitiatorSignData  string `json:"InitiatorSignData"`
+}
+
+type SmartContractDataRequest struct {
+	Token  string `json:"token,omitempty"`
+	Latest bool   `json:"latest"`
+}
+
+type SmartContractDataResponse struct {
+	Status        bool                      `json:"status"`
+	Message       string                    `json:"message"`
+	Result        interface{}               `json:"result"`
+	SCTDataReply  []SmartContractDataReply  `json:"SCTDataReply"`
+}
+
+type Rating struct {
+    UserDID  string `json:"user_did"`
+    Rating   int    `json:"rating"`
+    AssetID  string `json:"asset_id"`
+}
+
+type WrappedRating struct {
+    RateAsset Rating `json:"rate_asset"`
+}
+func RoundToPrecision(val float64, precision int, tolerance int) float64 {
+    factor := math.Pow(10, float64(precision))
+    return math.Round(val*factor) / factor
+}
+
+func GetRatingsFromChain(c *gin.Context) {
+    assetID := c.Query("asset_id")
+    if assetID == "" {
+        wrapError(c.JSON, "asset_id is required")
+        return
+    }
+
+    avg, err := GetRatingFromChain(assetID)
+    if err != nil {
+        wrapError(c.JSON, err.Error())
+        return
+    }
+    roundedAvg := RoundToPrecision(avg, 2, 1)
+
+	c.JSON(200, gin.H{
+		"asset_id": assetID,
+		"average_rating": roundedAvg,
+	})
+
+}
+
+const RATING_CONTRACT_HASH = "QmfEkQvWcLZEghJ1swffQg9nxcnT13j6xLiB3CqPXUvfg2"
+
+func GetRatingFromChain(assetID string) (float64, error) {
+	reqBody := SmartContractDataRequest{
+		Token:  RATING_CONTRACT_HASH,
+		Latest: false, 
+	}
+
+	bodyBytes, err := json.Marshal(reqBody)
+	if err != nil {
+		return 0, err
+	}
+
+	fmt.Printf("Sending request body to Rubix: %s\n", string(bodyBytes))
+
+	resp, err := http.Post("http://localhost:20007/api/get-smart-contract-token-chain-data", "application/json", bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return 0, err
+	}
+
+	fmt.Printf("Raw API response: %s\n", string(respBody))
+
+	var result SmartContractDataResponse
+	err = json.Unmarshal(respBody, &result)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(result.SCTDataReply) == 0 {
+		return 0, fmt.Errorf("Smart Contract Token %v is not registered", RATING_CONTRACT_HASH)
+	}
+
+	type userRating struct {
+		Rating int
+		Epoch  int64
+	}
+
+	latest := make(map[string]userRating)
+
+	for _, reply := range result.SCTDataReply {
+		if len(reply.SmartContractData) == 0 || reply.SmartContractData[0] != '{' {
+			fmt.Printf("Skipping invalid SmartContractData: %s\n", reply.SmartContractData)
+			continue
+		}
+
+		var wrapper WrappedRating
+		err := json.Unmarshal([]byte(reply.SmartContractData), &wrapper)
+		if err != nil {
+			fmt.Printf("Failed to parse  SmartContractData: %s\n", reply.SmartContractData)
+			continue
+		}
+
+		entry := wrapper.RateAsset
+		if entry.AssetID == assetID && entry.Rating >= 1 && entry.Rating <= 5 {
+			prev, exists := latest[entry.UserDID]
+			if !exists || reply.Epoch > prev.Epoch {
+				latest[entry.UserDID] = userRating{
+					Rating: entry.Rating,
+					Epoch:  reply.Epoch,
+				}
+			}
+		}
+	}
+
+	if len(latest) == 0 {
+		return 0, errors.New("no valid ratings found for asset")
+	}
+
+	fmt.Println("Latest ratings per DID:")
+	total := 0
+	for did, ur := range latest {
+		fmt.Printf("  %s -> %d (Epoch %d)\n", did, ur.Rating, ur.Epoch)
+		total += ur.Rating
+	}
+
+	average := float64(total) / float64(len(latest))
+	return average, nil
 }
 
 func handleUploadAsset(c *gin.Context) {
@@ -287,7 +433,7 @@ func handleUserOnboarding(c *gin.Context) {
 		wrapSuccess(c.JSON, "signature is invalid")
 		return
 	default:
-		wrapError(c.JSON, fmt.Sprintf("unexected error occured while retrieving the signature verification result, msg val extracted: %v", msg))
+		wrapError(c.JSON, fmt.Sprintf("unexpected error occured while retrieving the signature verification result, msg val extracted: %v", msg))
 	}
 }
 
