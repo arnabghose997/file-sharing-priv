@@ -10,9 +10,13 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"time"
 
+	"github.com/gin-contrib/cache"
+	"github.com/gin-contrib/cache/persistence"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+
 	wasmbridge "github.com/rubixchain/rubix-wasm/go-wasm-bridge"
 	wasmContext "github.com/rubixchain/rubix-wasm/go-wasm-bridge/context"
 )
@@ -36,6 +40,8 @@ func enableCors(w *http.ResponseWriter) {
 func main() {
 	r := gin.Default()
 
+	cacheStore := persistence.NewInMemoryStore(time.Second)
+
 	r.GET("/ws", func(c *gin.Context) {
 		handleSocketConnection(c.Writer, c.Request)
 	})
@@ -58,7 +64,7 @@ func main() {
 
 	// Metrics
 	r.GET("/metrics/asset_count", handleMetricsAssetCount)
-	r.GET("/metrics/transaction_count", handleMetricsTransactionCount)
+	r.GET("/metrics/transaction_count", cache.CachePage(cacheStore, 30 * time.Second, handleMetricsTransactionCount))
 
 	r.Run(":8082")
 }
