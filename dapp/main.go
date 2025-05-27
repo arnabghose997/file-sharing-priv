@@ -553,6 +553,9 @@ func handleMetricsAssetCount(c *gin.Context) {
 }
 
 func handleMetricsTransactionCount(c *gin.Context) {
+	w := http.ResponseWriter(c.Writer)
+	enableCors(&w)
+
 	nfts, err := listNFTs()
 	if err != nil {
 		fmt.Printf("failed to fetch NFT tokens: %v", err)
