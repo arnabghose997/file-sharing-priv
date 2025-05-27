@@ -481,7 +481,8 @@ func handleMetricsAssetCount(c *gin.Context) {
 
 	response, err := queryRubixNode(targetURL)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to fetch NFT tokens: %v", err)})
+		fmt.Printf("Failed to fetch NFT tokens: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"asset_count": 0, "ai_model_count": 0, "dataset_count": 0})
 		return
 	}
 
@@ -489,7 +490,7 @@ func handleMetricsAssetCount(c *gin.Context) {
 
 	if err := json.Unmarshal([]byte(response), &assetCountResponse); err != nil {
 		fmt.Printf("Unable to unmarshal request for /api/list-nfts, err: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"asset_count": 0})
+		c.JSON(http.StatusInternalServerError, gin.H{"asset_count": 0, "ai_model_count": 0, "dataset_count": 0})
 		return
 	}
 
@@ -498,7 +499,8 @@ func handleMetricsAssetCount(c *gin.Context) {
 
 	rubixNftDir := os.Getenv("RUBIX_NFT_DIR")
 	if rubixNftDir == "" {
-		getInternalError(c, "RUBIX_NFT_DIR environment variable not set")
+		fmt.Printf("metricsAssetCount: Unable to get RUBIX_NFT_DIR env variable")
+		c.JSON(http.StatusInternalServerError, gin.H{"asset_count": 0, "ai_model_count": 0, "dataset_count": 0})
 		return
 	}
 
@@ -507,13 +509,13 @@ func handleMetricsAssetCount(c *gin.Context) {
 
 		assetMetadataObj, err := os.ReadFile(assetMetadataDir)
 		if err != nil {
-			getInternalError(c, fmt.Sprintf("failed to read asset metadata file: %v", err))
+			fmt.Printf("failed to read asset metadata file: %v", err)
 			continue
 		}
 
 		if len(assetMetadataObj) == 0 {
-			getInternalError(c, fmt.Sprintf("metadata file for NFT ID %v is empty", nft.Nft))
-			return
+			fmt.Printf("metadata file for NFT ID %v is empty", nft.Nft)
+			continue
 		}
 
 		var intf struct {
@@ -521,8 +523,8 @@ func handleMetricsAssetCount(c *gin.Context) {
 		}
 
 		if err := json.Unmarshal(assetMetadataObj, &intf); err != nil {
-			getInternalError(c, fmt.Sprintf("unable to unmarshal metadata JSON: %v", err))
-			return
+			fmt.Printf("unable to unmarshal metadata JSON: %v", err)
+			continue
 		}
 
 		if intf.Type == "model" {
@@ -541,7 +543,8 @@ func handleMetricsAssetCount(c *gin.Context) {
 func handleMetricsTransactionCount(c *gin.Context) {
 	nfts, err := listNFTs()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to fetch NFT tokens: %v", err)})
+		fmt.Printf("failed to fetch NFT tokens: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"transaction_count": 0})
 		return
 	}
 
@@ -550,11 +553,14 @@ func handleMetricsTransactionCount(c *gin.Context) {
 	for _, nftId := range nfts {
 		transactions, err := listNFTTransactionsByID(nftId)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to fetch NFT transactions for %s: %v", nftId, err)})
+			fmt.Printf("failed to fetch NFT transactions for %s: %v\n", nftId, err)
+			c.JSON(http.StatusInternalServerError, gin.H{"transaction_count": 0})
 			return
 		}
 		if !transactions.Status {
 			fmt.Println(transactions.Message)
+			c.JSON(http.StatusInternalServerError, gin.H{"transaction_count": 0})
+			return
 		}
 
 		totalTransactionCount += len(transactions.NFTDataReply)
