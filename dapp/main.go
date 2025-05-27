@@ -121,6 +121,9 @@ func RoundToPrecision(val float64, precision int, tolerance int) float64 {
 }
 
 func GetRatingsFromChain(c *gin.Context) {
+	w := http.ResponseWriter(c.Writer)
+	enableCors(&w)
+
     assetID := c.Query("asset_id")
     if assetID == "" {
         wrapError(c.JSON, "asset_id is required")
