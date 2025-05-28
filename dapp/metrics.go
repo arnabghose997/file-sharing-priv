@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -22,6 +23,30 @@ type AssetCountResponse struct {
 type NFTTransactionList struct {
 	BasicResponse
 	NFTDataReply []interface{} `json:"NFTDataReply"`
+}
+
+type SCTransactionList struct {
+	BasicResponse
+	SCDataReply []interface{} `json:"SCDataReply"`
+}
+
+func fetchFromRubixNode(url, contentType string, data []byte) (string, error) {
+	resp, err := http.Post(url, contentType, bytes.NewBuffer(data))
+	if err != nil {
+		return "", fmt.Errorf("POST request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	return string(bodyBytes), nil
 }
 
 func queryRubixNode(url string) (string, error) {
@@ -65,6 +90,32 @@ func listNFTs() ([]string, error) {
 	}
 
 	return nftList, nil
+}
+
+func listSmartContractTransactions(contractId string) (*SmartContractDataResponse, error) {
+	targetURL, err := url.JoinPath(RUBIX_API, "/api/get-smart-contract-token-chain-data")
+	if err != nil {
+		return nil, fmt.Errorf("failed form POST request, err: %v", err)
+	}
+
+	requestParam := map[string]interface{}{
+		"token":  contractId,
+		"latest": false,
+	}
+
+	requestParamBytes, _ := json.Marshal(requestParam)
+
+	response, err := fetchFromRubixNode(targetURL, "application/json", requestParamBytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch NFT transactions: %w", err)
+	}
+
+	var transactions *SmartContractDataResponse
+	if err := json.Unmarshal([]byte(response), &transactions); err != nil {
+		return nil, fmt.Errorf("SC: unable to unmarshal response: %w", err)
+	}
+
+	return transactions, nil
 }
 
 func listNFTTransactionsByID(nftId string) (*NFTTransactionList, error) {

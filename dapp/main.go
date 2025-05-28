@@ -552,9 +552,23 @@ func handleMetricsAssetCount(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"asset_count": assetCount, "ai_model_count": aiModelCount, "dataset_count": datasetCount})
 }
 
+/*
+"QmZspYoWQ6ZygKBrcFKv98dMk4QU6nMt4gAagf81ygnF9S"
+  "QmVAMKVR1Q9etqfwqfdSGWseNjRKdmHr6Zck2TL8MfeEyT"
+  "QmVRwuiYMES2vySvJwqZ1oFgxtDjWwQXWuhgTctgDNu9ye"
+  "QmWGd62Mt82YwaVmHwLnRcWsVmnruPKPkd42BfuDwopkYt"
+  "QmfEkQvWcLZEghJ1swffQg9nxcnT13j6xLiB3CqPXUvfg2"
+*/
+
 func handleMetricsTransactionCount(c *gin.Context) {
 	w := http.ResponseWriter(c.Writer)
 	enableCors(&w)
+
+	supportedContracts := []string{
+		"QmVRwuiYMES2vySvJwqZ1oFgxtDjWwQXWuhgTctgDNu9ye",
+		"QmVAMKVR1Q9etqfwqfdSGWseNjRKdmHr6Zck2TL8MfeEyT",
+		"QmfEkQvWcLZEghJ1swffQg9nxcnT13j6xLiB3CqPXUvfg2", 
+	}
 
 	nfts, err := listNFTs()
 	if err != nil {
@@ -579,6 +593,21 @@ func handleMetricsTransactionCount(c *gin.Context) {
 		}
 
 		totalTransactionCount += len(transactions.NFTDataReply)
+	}
+
+	for _, contract := range supportedContracts {
+		contractObj, err := listSmartContractTransactions(contract)
+		if err != nil {
+			fmt.Printf("contract %v, err: %v", contract, err)
+			continue
+		}
+
+		if len(contractObj.SCTDataReply) == 0 {
+			fmt.Println("Length of contract is zero: ", contract)
+			continue
+		}
+
+		totalTransactionCount += len(contractObj.SCTDataReply)
 	}
 
 	// Send the JSON response
