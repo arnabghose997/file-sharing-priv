@@ -54,8 +54,8 @@ func main() {
 
 	r.POST("/api/upload_asset", handleUploadAsset)
 	r.POST("/api/upload_asset/upload_artifacts", handleUploadAsset_UploadArtifacts)
-	r.GET("/api/upload_asset/get_artifact_info_by_cid/:cid", handleUploadAsset_GetArtifactInfo)
-	r.GET("/api/upload_asset/get_artifact_file_name/:cid", handleUploadAsset_GetArtifactFileName)
+	r.GET("/api/upload_asset/get_artifact_info_by_cid/:cid", cache.CachePage(cacheStore, 12 * time.Hour, handleUploadAsset_GetArtifactInfo))
+	r.GET("/api/upload_asset/get_artifact_file_name/:cid", cache.CachePage(cacheStore, 12 * time.Hour, handleUploadAsset_GetArtifactFileName))
 
 	r.POST("/api/use_asset", handleUseAsset)
 	r.GET("/api/download_artifact/:cid", handleDownloadArtifact)
