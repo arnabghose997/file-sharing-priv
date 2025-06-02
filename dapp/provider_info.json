@@ -8,10 +8,10 @@
       "processor": "Intel Xeon",
       "region": "N.virginia",
       "hostingCost": 1,
-      "platformName": "AWS",
-      "providerName": "AWS support team",
+      "platformName": "TRIE DePIN Platform",
+      "providerName": "Provider VM #1",
       "platformImageUri": "",
-      "platformDescription": "aws infra providers",
+      "platformDescription": "Set of DePIN Provider VMs on TRIE",
       "providerDid": "bafybmid54eptkxvegqm43lpyngjz3v4n5h67mka2lueeuixdhjw254eeqi"
     },
     {
@@ -23,10 +23,10 @@
       "processor": "Intel Xeon",
       "region": "California",
       "hostingCost": 1,
-      "platformName": "AWS",
-      "providerName": "AWS support team",
+      "platformName": "TRIE DePIN Platform",
+      "providerName": "Provider VM #2",
       "platformImageUri": "",
-      "platformDescription": "aws infra providers",
+      "platformDescription": "Set of DePIN Provider VMs on TRIE",
       "providerDid": "bafybmigohe5h67w2ybdelyskcp53ffquipj2eq4rsnrwpidgiyb4ekkkeq"
     },
     {
@@ -38,10 +38,10 @@
       "processor": "AMD Ryzen",
       "region": "Singapore",
       "hostingCost": 1,
-      "platformName": "Azure",
-      "providerName": "Azure support team",
+      "platformName": "TRIE DePIN Platform",
+      "providerName": "Provider VM #3",
       "platformImageUri": "",
-      "platformDescription": "Microsoft Azure cloud infrastructure",
+      "platformDescription": "Set of DePIN Provider VMs on TRIE",
       "providerDid": "bafybmichrkqcjt2z7mkqmn53a4wmdpmz7i7mbs67i7ms6k2mhdci25rxpq"
     },
     {
@@ -53,10 +53,10 @@
       "processor": "Intel Xeon",
       "region": "Frankfurt",
       "hostingCost": 1,
-      "platformName": "Google Cloud",
-      "providerName": "Google Cloud support team",
+      "platformName": "TRIE DePIN Platform",
+      "providerName": "Provider VM #4",
       "platformImageUri": "",
-      "platformDescription": "Google Cloud platform infrastructure",
+      "platformDescription": "Set of DePIN Provider VMs on TRIE",
       "providerDid": "bafybmidkmt5vsygdiecbmjdsfcwz52j4lp3r4xuswkjwjs3kot5gbotaby"
     }
   ]
