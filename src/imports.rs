@@ -6,7 +6,7 @@ extern "C" {
         resp_len_ptr: *mut usize,
     ) -> i32;
 
-    pub fn do_transfer_ft_trie(
+    pub fn do_transfer_ft(
         inputdata_ptr: *const u8,
         inputdata_len: usize,
         resp_ptr_ptr: *mut *const u8,

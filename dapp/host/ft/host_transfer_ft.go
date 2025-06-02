@@ -14,7 +14,7 @@ import (
 type TransferFTData struct {
 	FTCount    int32  `json:"ft_count"`
 	FTName     string `json:"ft_name"`
-	CreatorDID string `json:"creatorDID"`
+	CreatorDID string `json:"creator_did"`
 	QuorumType int32  `json:"quorum_type"`
 	Comment    string `json:"comment"`
 	Receiver   string `json:"receiver"`
@@ -33,7 +33,7 @@ func NewDoTransferFTApiCall() *DoTransferFTApiCall {
 	return &DoTransferFTApiCall{}
 }
 func (h *DoTransferFTApiCall) Name() string {
-	return "do_transfer_ft_trie"
+	return "do_transfer_ft"
 }
 func (h *DoTransferFTApiCall) FuncType() *wasmtime.FuncType {
 	return wasmtime.NewFuncType(
