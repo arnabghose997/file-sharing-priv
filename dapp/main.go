@@ -68,7 +68,7 @@ func main() {
 
 	// Metrics
 	r.GET("/metrics/asset_count", handleMetricsAssetCount)
-	r.GET("/metrics/transaction_count", cache.CachePage(cacheStore, 30*time.Second, handleMetricsTransactionCount))
+	r.GET("/metrics/transaction_count", cache.CachePage(cacheStore, 30 * time.Second, handleMetricsTransactionCount))
 
 	r.GET("/api/get_rating_by_asset", GetRatingsFromChain)
 
@@ -86,12 +86,10 @@ func wrapSuccess(f func(code int, obj any), msg string) {
 	fmt.Println(msg)
 	f(200, gin.H{"message": msg})
 }
-
 // wrapSuccessJSON sends a JSON response with status 200 and the provided object.
 func wrapSuccessJSON(f func(code int, obj any), obj any) {
 	f(200, obj)
 }
-
 type SmartContractDataReply struct {
 	BlockNo            int    `json:"BlockNo"`
 	BlockId            string `json:"BlockId"`
@@ -108,80 +106,79 @@ type SmartContractDataRequest struct {
 }
 
 type SmartContractDataResponse struct {
-	Status       bool                     `json:"status"`
-	Message      string                   `json:"message"`
-	Result       interface{}              `json:"result"`
-	SCTDataReply []SmartContractDataReply `json:"SCTDataReply"`
+	Status        bool                      `json:"status"`
+	Message       string                    `json:"message"`
+	Result        interface{}               `json:"result"`
+	SCTDataReply  []SmartContractDataReply  `json:"SCTDataReply"`
 }
 
 type Rating struct {
-	UserDID string `json:"user_did"`
-	Rating  int    `json:"rating"`
-	AssetID string `json:"asset_id"`
+    UserDID  string `json:"user_did"`
+    Rating   int    `json:"rating"`
+    AssetID  string `json:"asset_id"`
 }
 
 type WrappedRating struct {
-	RateAsset Rating `json:"rate_asset"`
+    RateAsset Rating `json:"rate_asset"`
 }
-
 func RoundToPrecision(val float64, precision int, tolerance int) float64 {
-	factor := math.Pow(10, float64(precision))
-	return math.Round(val*factor) / factor
+    factor := math.Pow(10, float64(precision))
+    return math.Round(val*factor) / factor
 }
 
 func GetRatingsFromChain(c *gin.Context) {
 	w := http.ResponseWriter(c.Writer)
 	enableCors(&w)
 
-	assetID := c.Query("asset_id")
-	if assetID == "" {
-		wrapError(c.JSON, "asset_id is required")
-		return
-	}
+    assetID := c.Query("asset_id")
+    if assetID == "" {
+        wrapError(c.JSON, "asset_id is required")
+        return
+    }
 
-	avg, userCount, err := GetRatingFromChain(assetID)
-	if err != nil {
-		fmt.Println(err)
-		wrapSuccessJSON(c.JSON, map[string]interface{}{
-			"average_rating": 0.0,
-			"user_count":     userCount,
-		})
-		return
-	}
+    avg, userCount, err := GetRatingFromChain(assetID)
+    if err != nil {
+        fmt.Println(err)
+        wrapSuccessJSON(c.JSON, map[string]interface{}{
+            "average_rating": 0.0,
+            "user_count": userCount,
+        })
+        return
+    }
+    
+    roundedAvg := RoundToPrecision(avg, 2, 1)
 
-	roundedAvg := RoundToPrecision(avg, 2, 1)
-
-	wrapSuccessJSON(c.JSON, map[string]interface{}{
-		"average_rating": roundedAvg,
-		"user_count":     userCount,
-	})
+    wrapSuccessJSON(c.JSON, map[string]interface{}{
+        "average_rating": roundedAvg,
+        "user_count": userCount,
+    })
 
 }
 
 const RATING_CONTRACT_HASH = "QmfEkQvWcLZEghJ1swffQg9nxcnT13j6xLiB3CqPXUvfg2"
 
-func GetRatingFromChain(assetID string) (float64, int, error) {
+func GetRatingFromChain(assetID string) (float64,int, error) {
 	reqBody := SmartContractDataRequest{
 		Token:  RATING_CONTRACT_HASH,
-		Latest: false,
+		Latest: false, 
 	}
 
 	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return 0, 0, err
+		return 0,0, err
 	}
 
 	fmt.Printf("Sending request body to Rubix: %s\n", string(bodyBytes))
 
 	resp, err := http.Post("http://localhost:20007/api/get-smart-contract-token-chain-data", "application/json", bytes.NewBuffer(bodyBytes))
 	if err != nil {
-		return 0, 0, err
+		return 0, 0,err
 	}
 	defer resp.Body.Close()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return 0, 0, err
+		return 0,0, err
 	}
 
 	fmt.Printf("Raw API response: %s\n", string(respBody))
@@ -189,16 +186,16 @@ func GetRatingFromChain(assetID string) (float64, int, error) {
 	var result SmartContractDataResponse
 	err = json.Unmarshal(respBody, &result)
 	if err != nil {
-		return 0, 0, err
+		return 0, 0,err
 	}
 
 	if len(result.SCTDataReply) == 0 {
-		return 0, 0, fmt.Errorf("Smart Contract Token %v is not registered", RATING_CONTRACT_HASH)
+		return 0,0, fmt.Errorf("Smart Contract Token %v is not registered", RATING_CONTRACT_HASH)
 	}
 
 	type userRating struct {
-		Rating    int
-		Epoch     int64
+		Rating int
+		Epoch  int64
 		UserCount int
 	}
 
@@ -230,7 +227,7 @@ func GetRatingFromChain(assetID string) (float64, int, error) {
 	}
 
 	if len(latest) == 0 {
-		return 0, 0, errors.New("no valid ratings found for asset")
+		return 0,0, errors.New("no valid ratings found for asset")
 	}
 
 	fmt.Println("Latest ratings per DID:")
@@ -239,7 +236,7 @@ func GetRatingFromChain(assetID string) (float64, int, error) {
 		fmt.Printf("  %s -> %d (Epoch %d)\n", did, ur.Rating, ur.Epoch)
 		total += ur.Rating
 	}
-
+	
 	average := float64(total) / float64(len(latest))
 	user_count := len(latest)
 	return average, user_count, nil
@@ -572,7 +569,7 @@ func handleMetricsTransactionCount(c *gin.Context) {
 	supportedContracts := []string{
 		"QmVRwuiYMES2vySvJwqZ1oFgxtDjWwQXWuhgTctgDNu9ye",
 		"QmVAMKVR1Q9etqfwqfdSGWseNjRKdmHr6Zck2TL8MfeEyT",
-		"QmfEkQvWcLZEghJ1swffQg9nxcnT13j6xLiB3CqPXUvfg2",
+		"QmfEkQvWcLZEghJ1swffQg9nxcnT13j6xLiB3CqPXUvfg2", 
 	}
 
 	nfts, err := listNFTs()
