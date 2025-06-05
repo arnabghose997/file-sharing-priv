@@ -17,6 +17,8 @@ type AssetCountResponse struct {
 		Nft      string  `json:"nft"`
 		NftValue float64 `json:"nft_value"`
 		OwnerDID string  `json:"owner_did"`
+		NftMetadata string `json:"nft_metadata"`
+		NFTFileName string `json:"nft_file_name"`
 	} `json:"nfts"`
 }
 

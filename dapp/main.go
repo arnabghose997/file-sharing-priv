@@ -60,6 +60,8 @@ func main() {
 	r.POST("/api/use_asset", handleUseAsset)
 	r.GET("/api/download_artifact/:cid", handleDownloadArtifact)
 
+	r.POST("/api/pay_for_inference", handlePayForInference)
+
 	r.POST("/api/onboard_infra_provider", handleUserOnboarding)
 	r.GET("/api/onboarded_providers", handleOnboardedProviders)
 
@@ -267,6 +269,57 @@ func handleUploadAsset(c *gin.Context) {
 	hostFnRegistry.Register(ft.NewDoTransferFTApiCall())
 	hostFnRegistry.Register(nft.NewDoMintNFTApiCall())
 	hostFnRegistry.Register(ft.NewDoCreateFTApiCall())
+
+	// Initialize the WASM module
+	wasmModule, err := wasmbridge.NewWasmModule(
+		selfContractHashPath,
+		hostFnRegistry,
+		wasmbridge.WithRubixNodeAddress(nodeAddress),
+		wasmbridge.WithQuorumType(quorumType),
+		wasmbridge.WithWasmContext(wasmCtx),
+	)
+	if err != nil {
+		wrapError(c.JSON, fmt.Sprintf("unable to initialize wasmModule: %v", err))
+		return
+	}
+
+	if contractInputRequest.SmartContractData == "" {
+		wrapError(c.JSON, fmt.Sprintf("unable to fetch Smart Contract from callback"))
+		return
+	}
+
+	_, err = wasmModule.CallFunction(contractInputRequest.SmartContractData)
+	if err != nil {
+		wrapError(c.JSON, fmt.Sprintf("unable to execute function, err: %v", err))
+		return
+	}
+}
+
+func handlePayForInference(c *gin.Context) {
+	nodeAddress := "http://localhost:20007"
+	quorumType := 2
+
+	selfContractHashPath := path.Join("../artifacts/inference_contract.wasm")
+
+	var contractInputRequest ContractInputRequest
+
+	err := json.NewDecoder(c.Request.Body).Decode(&contractInputRequest)
+	if err != nil {
+		wrapError(c.JSON, "err: Invalid request body")
+		return
+	}
+
+	trieConn, ok := TrieClientsMap[contractInputRequest.InitiatorDID]
+	if !ok {
+		wrapError(c.JSON, fmt.Sprintf("clientID %s not found", contractInputRequest.InitiatorDID))
+		return
+	}
+
+	wasmCtx := wasmContext.NewWasmContext().WithExternalSocketConn(trieConn)
+
+	// Create Import function registry
+	hostFnRegistry := wasmbridge.NewHostFunctionRegistry()
+	hostFnRegistry.Register(ft.NewDoTransferFTApiCall())
 
 	// Initialize the WASM module
 	wasmModule, err := wasmbridge.NewWasmModule(
@@ -514,26 +567,33 @@ func handleMetricsAssetCount(c *gin.Context) {
 	}
 
 	for _, nft := range assetCountResponse.Nfts {
-		assetMetadataDir := path.Join(rubixNftDir, nft.Nft, "metadata.json")
-
-		assetMetadataObj, err := os.ReadFile(assetMetadataDir)
-		if err != nil {
-			fmt.Printf("failed to read asset metadata file: %v", err)
-			continue
-		}
-
-		if len(assetMetadataObj) == 0 {
-			fmt.Printf("metadata file for NFT ID %v is empty", nft.Nft)
-			continue
-		}
-
 		var intf struct {
 			Type string `json:"type"`
 		}
 
-		if err := json.Unmarshal(assetMetadataObj, &intf); err != nil {
-			fmt.Printf("unable to unmarshal metadata JSON: %v", err)
-			continue
+		if nft.NftMetadata != "" {
+			if err := json.Unmarshal([]byte(nft.NftMetadata), &intf); err != nil {
+				fmt.Printf("unable to unmarshal NFT metadata: %v", err)
+				continue
+			}
+		} else {
+			assetMetadataDir := path.Join(rubixNftDir, nft.Nft, "metadata.json")
+
+			assetMetadataObj, err := os.ReadFile(assetMetadataDir)
+			if err != nil {
+				fmt.Printf("failed to read asset metadata file: %v", err)
+				continue
+			}
+
+			if len(assetMetadataObj) == 0 {
+				fmt.Printf("metadata file for NFT ID %v is empty", nft.Nft)
+				continue
+			}
+
+			if err := json.Unmarshal(assetMetadataObj, &intf); err != nil {
+				fmt.Printf("unable to unmarshal metadata JSON: %v", err)
+				continue
+			}
 		}
 
 		if intf.Type == "model" {
@@ -549,13 +609,6 @@ func handleMetricsAssetCount(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"asset_count": assetCount, "ai_model_count": aiModelCount, "dataset_count": datasetCount})
 }
 
-/*
-"QmZspYoWQ6ZygKBrcFKv98dMk4QU6nMt4gAagf81ygnF9S"
-  "QmVAMKVR1Q9etqfwqfdSGWseNjRKdmHr6Zck2TL8MfeEyT"
-  "QmVRwuiYMES2vySvJwqZ1oFgxtDjWwQXWuhgTctgDNu9ye"
-  "QmWGd62Mt82YwaVmHwLnRcWsVmnruPKPkd42BfuDwopkYt"
-  "QmfEkQvWcLZEghJ1swffQg9nxcnT13j6xLiB3CqPXUvfg2"
-*/
 
 func handleMetricsTransactionCount(c *gin.Context) {
 	w := http.ResponseWriter(c.Writer)
@@ -564,7 +617,8 @@ func handleMetricsTransactionCount(c *gin.Context) {
 	supportedContracts := []string{
 		"QmVRwuiYMES2vySvJwqZ1oFgxtDjWwQXWuhgTctgDNu9ye",
 		"QmVAMKVR1Q9etqfwqfdSGWseNjRKdmHr6Zck2TL8MfeEyT",
-		"QmfEkQvWcLZEghJ1swffQg9nxcnT13j6xLiB3CqPXUvfg2", 
+		"QmfEkQvWcLZEghJ1swffQg9nxcnT13j6xLiB3CqPXUvfg2",
+		"QmS5DogBfk96voS54hhE4KemToGRWgGC6Fbk5cZboTNh3m",
 	}
 
 	nfts, err := listNFTs()
@@ -583,10 +637,9 @@ func handleMetricsTransactionCount(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"transaction_count": 0})
 			return
 		}
-		if !transactions.Status {
-			fmt.Println(transactions.Message)
-			c.JSON(http.StatusInternalServerError, gin.H{"transaction_count": 0})
-			return
+
+		if transactions.NFTDataReply == nil {
+			continue
 		}
 
 		totalTransactionCount += len(transactions.NFTDataReply)
