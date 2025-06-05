@@ -29,9 +29,11 @@ type DoMintNFTApiCall struct {
 
 type MintNFTData struct {
 	Did      string  `json:"did"`
-	AssetId  string  `json:"assetId"`
+	NftId  string  `json:"nftId"`
 	NftData  string  `json:"nftData"`
 	NftValue float64 `json:"nftValue"`
+	NftMetadata string `json:"nftMetadata"`
+	NFTFileName string `json:"nftFilename"`
 }
 
 type deployNFTReq struct {
@@ -40,6 +42,8 @@ type deployNFTReq struct {
 	QuorumType int32   `json:"quorum_type"`
 	NftData    string  `json:"nft_data"`
 	NftValue   float64 `json:"nft_value"`
+	NFTMetadata string `json:"nft_metadata"`
+	NFTFileName string `json:"nft_file_name"`
 }
 
 func NewDoMintNFTApiCall() *DoMintNFTApiCall {
@@ -78,10 +82,12 @@ func callDeployNFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorumT
 	var deployReq deployNFTReq
 
 	deployReq.Did = mintNFTData.Did
-	deployReq.Nft = mintNFTData.AssetId
+	deployReq.Nft = mintNFTData.NftId
 	deployReq.QuorumType = int32(quorumType)
 	deployReq.NftData = mintNFTData.NftData
 	deployReq.NftValue = mintNFTData.NftValue
+	deployReq.NFTMetadata = mintNFTData.NftMetadata
+	deployReq.NFTFileName = mintNFTData.NFTFileName
 
 	deployNFTdataBytes, _ := json.Marshal(deployReq)
 	var mintNFTDataMap map[string]interface{} = make(map[string]interface{})
@@ -166,7 +172,7 @@ func (h *DoMintNFTApiCall) callback(
 			NftId string `json:"nftId"`
 			TxId  string `json:"txId"`
 		}{
-			NftId: mintNFTData.AssetId,
+			NftId: mintNFTData.NftId,
 			TxId:  nftDeployTxID,
 		}
 

@@ -30,12 +30,12 @@ func handleSocketConnection(w http.ResponseWriter, r *http.Request) {
 
 	if tcpConn, ok := conn.UnderlyingConn().(*net.TCPConn); ok {
 		tcpConn.SetKeepAlive(true)
-		tcpConn.SetKeepAlivePeriod(20 * time.Second)
+		tcpConn.SetKeepAlivePeriod(3 * time.Second)
 	}
 
 	conn.SetCloseHandler(func(code int, text string) error {
 		defer conn.Close()
-		fmt.Println("Client disconnected (CLOSING): ", clientID)
+		fmt.Printf("Client disconnected (CLOSING): %v, errCode: %v, txt: %v", clientID, code, text)
 		delete(TrieClientsMap, clientID)
 		return nil
 	})

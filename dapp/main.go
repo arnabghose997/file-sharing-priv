@@ -43,7 +43,7 @@ func enableCors(w *http.ResponseWriter) {
 
 func main() {
 	r := gin.Default()
-
+	
 	cacheStore := persistence.NewInMemoryStore(time.Second)
 
 	r.GET("/ws", func(c *gin.Context) {
@@ -339,14 +339,11 @@ func handleUseAsset(c *gin.Context) {
 		return
 	}
 
-	ipfsHash, err := wasmModule.CallFunction(contractInputRequest.SmartContractData)
+	_, err = wasmModule.CallFunction(contractInputRequest.SmartContractData)
 	if err != nil {
 		wrapError(c.JSON, fmt.Sprintf("unable to execute function, err: %v", err))
 		return
 	}
-
-	// TODO: Send a websocket message to TRIE to handle the transaction
-	fmt.Println(ipfsHash)
 }
 
 // NEW HANDLER FOR CREATE TOKEN
