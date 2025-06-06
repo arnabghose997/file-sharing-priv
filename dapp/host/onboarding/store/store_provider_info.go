@@ -6,21 +6,28 @@ import (
 	"os"
 )
 
+type DepinEndpoints struct {
+	Upload    string `json:"upload"`
+	Inference string `json:"inference"`
+}
+
 type ProviderInfo struct {
-	Storage             string `json:"storage"`
-	Memory              string `json:"memory"`
-	OS                  string `json:"os"`
-	Core                string `json:"core"`
-	GPU                 string `json:"gpu"`
-	Region              string `json:"region"`
-	PlatformName        string `json:"platformName"`
-	ProviderName        string `json:"providerName"`
-	PlatformDescription string `json:"platformDescription"`
-	PlatformImageUri    string `json:"platformImageUri"`
-	Processor           string `json:"processor"`
-	ProviderDid         string `json:"providerDid"`
-	HostingCost         int    `json:"hostingCost"`
-	TrainingCost        int    `json:"trainingCost"`
+	Storage             string         `json:"storage"`
+	Memory              string         `json:"memory"`
+	OS                  string         `json:"os"`
+	Core                string         `json:"core"`
+	GPU                 string         `json:"gpu"`
+	Region              string         `json:"region"`
+	PlatformName        string         `json:"platformName"`
+	ProviderName        string         `json:"providerName"`
+	PlatformDescription string         `json:"platformDescription"`
+	PlatformImageUri    string         `json:"platformImageUri"`
+	Processor           string         `json:"processor"`
+	ProviderDid         string         `json:"providerDid"`
+	HostingCost         int            `json:"hostingCost"`
+	TrainingCost        int            `json:"trainingCost"`
+	Endpoints           DepinEndpoints `json:"endpoints"`
+	SupportedModels     string         `json:"supportedModels"`
 }
 
 func StoreDepinProviderInfo(provider *ProviderInfo) error {
