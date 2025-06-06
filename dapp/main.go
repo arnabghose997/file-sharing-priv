@@ -43,7 +43,7 @@ func enableCors(w *http.ResponseWriter) {
 
 func main() {
 	r := gin.Default()
-	
+
 	cacheStore := persistence.NewInMemoryStore(time.Second)
 
 	r.GET("/ws", func(c *gin.Context) {
@@ -54,8 +54,8 @@ func main() {
 
 	r.POST("/api/upload_asset", handleUploadAsset)
 	r.POST("/api/upload_asset/upload_artifacts", handleUploadAsset_UploadArtifacts)
-	r.GET("/api/upload_asset/get_artifact_info_by_cid/:cid", cache.CachePage(cacheStore, 12 * time.Hour, handleUploadAsset_GetArtifactInfo))
-	r.GET("/api/upload_asset/get_artifact_file_name/:cid", cache.CachePage(cacheStore, 12 * time.Hour, handleUploadAsset_GetArtifactFileName))
+	r.GET("/api/upload_asset/get_artifact_info_by_cid/:cid", cache.CachePage(cacheStore, 12*time.Hour, handleUploadAsset_GetArtifactInfo))
+	r.GET("/api/upload_asset/get_artifact_file_name/:cid", cache.CachePage(cacheStore, 12*time.Hour, handleUploadAsset_GetArtifactFileName))
 
 	r.POST("/api/use_asset", handleUseAsset)
 	r.GET("/api/download_artifact/:cid", handleDownloadArtifact)
@@ -70,7 +70,7 @@ func main() {
 
 	// Metrics
 	r.GET("/metrics/asset_count", handleMetricsAssetCount)
-	r.GET("/metrics/transaction_count", cache.CachePage(cacheStore, 30 * time.Second, handleMetricsTransactionCount))
+	r.GET("/metrics/transaction_count", cache.CachePage(cacheStore, 30*time.Second, handleMetricsTransactionCount))
 
 	r.GET("/api/get_rating_by_asset", GetRatingsFromChain)
 
@@ -86,10 +86,12 @@ func wrapSuccess(f func(code int, obj any), msg string) {
 	fmt.Println(msg)
 	f(200, gin.H{"message": msg})
 }
+
 // wrapSuccessJSON sends a JSON response with status 200 and the provided object.
 func wrapSuccessJSON(f func(code int, obj any), obj any) {
 	f(200, obj)
 }
+
 type SmartContractDataReply struct {
 	BlockNo            int    `json:"BlockNo"`
 	BlockId            string `json:"BlockId"`
@@ -106,79 +108,80 @@ type SmartContractDataRequest struct {
 }
 
 type SmartContractDataResponse struct {
-	Status        bool                      `json:"status"`
-	Message       string                    `json:"message"`
-	Result        interface{}               `json:"result"`
-	SCTDataReply  []SmartContractDataReply  `json:"SCTDataReply"`
+	Status       bool                     `json:"status"`
+	Message      string                   `json:"message"`
+	Result       interface{}              `json:"result"`
+	SCTDataReply []SmartContractDataReply `json:"SCTDataReply"`
 }
 
 type Rating struct {
-    UserDID  string `json:"user_did"`
-    Rating   int    `json:"rating"`
-    AssetID  string `json:"asset_id"`
+	UserDID string `json:"user_did"`
+	Rating  int    `json:"rating"`
+	AssetID string `json:"asset_id"`
 }
 
 type WrappedRating struct {
-    RateAsset Rating `json:"rate_asset"`
+	RateAsset Rating `json:"rate_asset"`
 }
+
 func RoundToPrecision(val float64, precision int, tolerance int) float64 {
-    factor := math.Pow(10, float64(precision))
-    return math.Round(val*factor) / factor
+	factor := math.Pow(10, float64(precision))
+	return math.Round(val*factor) / factor
 }
 
 func GetRatingsFromChain(c *gin.Context) {
 	w := http.ResponseWriter(c.Writer)
 	enableCors(&w)
 
-    assetID := c.Query("asset_id")
-    if assetID == "" {
-        wrapError(c.JSON, "asset_id is required")
-        return
-    }
+	assetID := c.Query("asset_id")
+	if assetID == "" {
+		wrapError(c.JSON, "asset_id is required")
+		return
+	}
 
-    avg, userCount, err := GetRatingFromChain(assetID)
-    if err != nil {
-        fmt.Println(err)
-        wrapSuccessJSON(c.JSON, map[string]interface{}{
-            "average_rating": 0.0,
-            "user_count": userCount,
-        })
-        return
-    }
-    
-    roundedAvg := RoundToPrecision(avg, 2, 1)
+	avg, userCount, err := GetRatingFromChain(assetID)
+	if err != nil {
+		fmt.Println(err)
+		wrapSuccessJSON(c.JSON, map[string]interface{}{
+			"average_rating": 0.0,
+			"user_count":     userCount,
+		})
+		return
+	}
 
-    wrapSuccessJSON(c.JSON, map[string]interface{}{
-        "average_rating": roundedAvg,
-        "user_count": userCount,
-    })
+	roundedAvg := RoundToPrecision(avg, 2, 1)
+
+	wrapSuccessJSON(c.JSON, map[string]interface{}{
+		"average_rating": roundedAvg,
+		"user_count":     userCount,
+	})
 
 }
 
 const RATING_CONTRACT_HASH = "QmfEkQvWcLZEghJ1swffQg9nxcnT13j6xLiB3CqPXUvfg2"
 
-func GetRatingFromChain(assetID string) (float64,int, error) {
+func GetRatingFromChain(assetID string) (float64, int, error) {
 	reqBody := SmartContractDataRequest{
 		Token:  RATING_CONTRACT_HASH,
-		Latest: false, 
+		Latest: false,
 	}
 
 	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return 0,0, err
+		return 0, 0, err
 	}
 
 	fmt.Printf("Sending request body to Rubix: %s\n", string(bodyBytes))
 
 	resp, err := http.Post("http://localhost:20007/api/get-smart-contract-token-chain-data", "application/json", bytes.NewBuffer(bodyBytes))
 	if err != nil {
-		return 0, 0,err
+		return 0, 0, err
 	}
 	defer resp.Body.Close()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return 0,0, err
+		return 0, 0, err
 	}
 
 	fmt.Printf("Raw API response: %s\n", string(respBody))
@@ -186,16 +189,16 @@ func GetRatingFromChain(assetID string) (float64,int, error) {
 	var result SmartContractDataResponse
 	err = json.Unmarshal(respBody, &result)
 	if err != nil {
-		return 0, 0,err
+		return 0, 0, err
 	}
 
 	if len(result.SCTDataReply) == 0 {
-		return 0,0, fmt.Errorf("Smart Contract Token %v is not registered", RATING_CONTRACT_HASH)
+		return 0, 0, fmt.Errorf("Smart Contract Token %v is not registered", RATING_CONTRACT_HASH)
 	}
 
 	type userRating struct {
-		Rating int
-		Epoch  int64
+		Rating    int
+		Epoch     int64
 		UserCount int
 	}
 
@@ -227,7 +230,7 @@ func GetRatingFromChain(assetID string) (float64,int, error) {
 	}
 
 	if len(latest) == 0 {
-		return 0,0, errors.New("no valid ratings found for asset")
+		return 0, 0, errors.New("no valid ratings found for asset")
 	}
 
 	fmt.Println("Latest ratings per DID:")
@@ -236,7 +239,7 @@ func GetRatingFromChain(assetID string) (float64,int, error) {
 		fmt.Printf("  %s -> %d (Epoch %d)\n", did, ur.Rating, ur.Epoch)
 		total += ur.Rating
 	}
-	
+
 	average := float64(total) / float64(len(latest))
 	user_count := len(latest)
 	return average, user_count, nil
@@ -517,18 +520,18 @@ func handleOnboardedProviders(c *gin.Context) {
 	w := http.ResponseWriter(c.Writer)
 	enableCors(&w)
 
-	providerInfoPath := "./provider_info.json"
+	providerInfoPath := "./depin/config.json"
 
 	providerInfo, err := os.ReadFile(providerInfoPath)
 	if err != nil {
-		getInternalError(c, fmt.Sprintf("failed to read provider_info.json file, err: %v", err))
+		getInternalError(c, fmt.Sprintf("failed to read depin/config.json file, err: %v", err))
 		return
 	}
 
 	var providerInfoMap []map[string]interface{}
 	err = json.Unmarshal(providerInfo, &providerInfoMap)
 	if err != nil {
-		getInternalError(c, fmt.Sprintf("failed to unmarshal provider_info.json file, err: %v", err))
+		getInternalError(c, fmt.Sprintf("failed to unmarshal depin/config.json file, err: %v", err))
 		return
 	}
 
@@ -608,7 +611,6 @@ func handleMetricsAssetCount(c *gin.Context) {
 	assetCount := aiModelCount + datasetCount
 	c.JSON(http.StatusOK, gin.H{"asset_count": assetCount, "ai_model_count": aiModelCount, "dataset_count": datasetCount})
 }
-
 
 func handleMetricsTransactionCount(c *gin.Context) {
 	w := http.ResponseWriter(c.Writer)

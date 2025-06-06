@@ -21,13 +21,13 @@ func GetProviderInfo(c *gin.Context) {
 }
 
 func readProviderInfoList() ([]*ProviderInfo, error) {
-	providerInfoListPath := "./provider_info.json"
+	providerInfoListPath := "./depin/config.json"
 
 	var providerInfoList []*ProviderInfo = make([]*ProviderInfo, 0)
 
 	f, err := os.Open(providerInfoListPath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to open file provider_info.json, err: %v", err)
+		return nil, fmt.Errorf("unable to open file depin/config.json, err: %v", err)
 	}
 	defer f.Close()
 

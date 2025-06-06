@@ -24,7 +24,7 @@ type ProviderInfo struct {
 }
 
 func StoreDepinProviderInfo(provider *ProviderInfo) error {
-	jsonFilePath := "./provider_info.json"
+	jsonFilePath := "./depin/config.json"
 
 	providerList, err := readProviderInfoList()
 	if err != nil {
