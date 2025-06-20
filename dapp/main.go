@@ -324,6 +324,7 @@ func handlePayForInference(c *gin.Context) {
 	// Create Import function registry
 	hostFnRegistry := wasmbridge.NewHostFunctionRegistry()
 	hostFnRegistry.Register(ft.NewDoTransferFTApiCall())
+	hostFnRegistry.Register(nft.NewDoExecuteNFT())
 
 	// Initialize the WASM module
 	wasmModule, err := wasmbridge.NewWasmModule(
