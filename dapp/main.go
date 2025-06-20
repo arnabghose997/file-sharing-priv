@@ -75,6 +75,8 @@ func main() {
 
 	r.GET("/api/get_rating_by_asset", GetRatingsFromChain)
 
+	r.POST("/api/transfer_ft", handleTransferToken)
+
 	r.Run(":8082")
 }
 
@@ -662,4 +664,59 @@ func handleMetricsTransactionCount(c *gin.Context) {
 
 	// Send the JSON response
 	c.JSON(http.StatusOK, gin.H{"transaction_count": totalTransactionCount})
+}
+
+func handleTransferToken(c *gin.Context) {
+	nodeAddress := "http://localhost:20007"
+	quorumType := 2
+
+	// Use the existing WASM file that contains CREATE_FT functionality
+	selfContractHashPath := path.Join("../artifacts/asset_transfer_ft.wasm")
+
+	var contractInputRequest ContractInputRequest
+
+	err := json.NewDecoder(c.Request.Body).Decode(&contractInputRequest)
+	if err != nil {
+		wrapError(c.JSON, "err: Invalid request body")
+		return
+	}
+	fmt.Println("The value fo Initator DID: ", contractInputRequest.InitiatorDID)
+
+	trieConn, ok := TrieClientsMap[contractInputRequest.InitiatorDID]
+	if !ok {
+		wrapError(c.JSON, fmt.Sprintf("clientID %s not found", contractInputRequest.InitiatorDID))
+		return
+	}
+
+	wasmCtx := wasmContext.NewWasmContext().WithExternalSocketConn(trieConn)
+
+	// Create Import function registry - only register what's needed for token creation
+	hostFnRegistry := wasmbridge.NewHostFunctionRegistry()
+	hostFnRegistry.Register(ft.NewDoTransferFTApiCall())
+
+	// Initialize the WASM module
+	wasmModule, err := wasmbridge.NewWasmModule(
+		selfContractHashPath,
+		hostFnRegistry,
+		wasmbridge.WithRubixNodeAddress(nodeAddress),
+		wasmbridge.WithQuorumType(quorumType),
+		wasmbridge.WithWasmContext(wasmCtx),
+	)
+	if err != nil {
+		wrapError(c.JSON, fmt.Sprintf("unable to initialize wasmModule: %v", err))
+		return
+	}
+
+	if contractInputRequest.SmartContractData == "" {
+		wrapError(c.JSON, fmt.Sprintf("unable to fetch Smart Contract from callback"))
+		return
+	}
+
+	result, err := wasmModule.CallFunction(contractInputRequest.SmartContractData)
+	if err != nil {
+		wrapError(c.JSON, fmt.Sprintf("unable to execute function, err: %v", err))
+		return
+	}
+
+	wrapSuccess(c.JSON, result)
 }
