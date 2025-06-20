@@ -185,8 +185,6 @@ func GetRatingFromChain(assetID string) (float64, int, error) {
 		return 0, 0, err
 	}
 
-	fmt.Printf("Raw API response: %s\n", string(respBody))
-
 	var result SmartContractDataResponse
 	err = json.Unmarshal(respBody, &result)
 	if err != nil {
@@ -234,10 +232,8 @@ func GetRatingFromChain(assetID string) (float64, int, error) {
 		return 0, 0, errors.New("no valid ratings found for asset")
 	}
 
-	fmt.Println("Latest ratings per DID:")
 	total := 0
-	for did, ur := range latest {
-		fmt.Printf("  %s -> %d (Epoch %d)\n", did, ur.Rating, ur.Epoch)
+	for _, ur := range latest {
 		total += ur.Rating
 	}
 
