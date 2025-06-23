@@ -299,7 +299,7 @@ func handlePayForInference(c *gin.Context) {
 	nodeAddress := "http://localhost:20007"
 	quorumType := 2
 
-	selfContractHashPath := path.Join("../artifacts/inference_contract_old.wasm")
+	selfContractHashPath := path.Join("../artifacts/inference_contract.wasm")
 
 	var contractInputRequest ContractInputRequest
 
