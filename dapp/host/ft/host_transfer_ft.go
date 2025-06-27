@@ -94,12 +94,16 @@ func callTransferFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorum
 		return fmt.Errorf("unable to read response from web socket connection for FT Transfer, err: %v", err)
 	}
 
+	fmt.Println("Response received for FT Transfer:", string(resp))
+
 	var response *BasicResponse
 	err3 := json.Unmarshal(resp, &response)
 	if err3 != nil {
 		fmt.Println("Error unmarshaling response:", err3)
 		return err3
 	}
+
+	fmt.Println("Response received for FT Transfer:", response)
 
 	if !response.Status {
 		fmt.Println("error in response for FT: %s", response.Message)
