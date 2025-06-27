@@ -1,4 +1,4 @@
-use super::imports::{do_mint_nft_trie, do_transfer_ft_trie, do_create_ft};
+use super::imports::{do_mint_nft_trie, do_transfer_ft, do_create_ft};
 use std::str;
 use serde::{Serialize,Deserialize};
 use rubixwasm_std::errors::WasmError;
@@ -25,7 +25,7 @@ pub struct TransferFt{
     pub comment: String, 
     pub ft_count: i32,
     pub ft_name: String,
-    pub creatorDID: String,
+    pub creator_did: String,
     pub sender: String,
     pub receiver: String,
 }
@@ -102,7 +102,7 @@ pub fn call_transfer_ft_api(input_data: TransferFt) -> Result<String, WasmError>
         let mut resp_len: usize = 0;
 
         // Call the imported host functionrubixwasm_std::
-        let result = do_transfer_ft_trie(
+        let result = do_transfer_ft(
             input_ptr,
             input_len,
             &mut resp_ptr,
