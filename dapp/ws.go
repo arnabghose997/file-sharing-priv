@@ -79,7 +79,7 @@ func handleSocketConnection(w http.ResponseWriter, r *http.Request) {
 	select {}
 }
 
-func handleConnectedClients(c *gin.Context) {
+func (s *Server) handleConnectedClients(c *gin.Context) {
 	clientIDs := make([]string, 0, len(TrieClientsMap))
 	for clientID := range TrieClientsMap {
 		clientIDs = append(clientIDs, clientID)
@@ -87,7 +87,7 @@ func handleConnectedClients(c *gin.Context) {
 	c.JSON(http.StatusOK, clientIDs)
 }
 
-func handlePingClient(c *gin.Context) {
+func (s *Server) handlePingClient(c *gin.Context) {
 	clientID := c.Query("clientID")
 	if clientID == "" {
 		c.JSON(http.StatusBadRequest, "clientID is required")

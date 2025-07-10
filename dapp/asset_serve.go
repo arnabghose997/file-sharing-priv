@@ -74,7 +74,7 @@ func getClientError(c *gin.Context, errMsg string) {
 // 	getResult(c, assetFilePath, metadataFilePath)
 // }
 
-func handleUploadAsset_UploadArtifacts(c *gin.Context) {
+func (s *Server) handleUploadAsset_UploadArtifacts(c *gin.Context) {
 	w := http.ResponseWriter(c.Writer)
 	enableCors(&w)
 
@@ -158,7 +158,7 @@ func handleUploadAsset_UploadArtifacts(c *gin.Context) {
 	getResult(c, assetFilePath, metadataFilePath)
 }
 
-func handleUploadAsset_GetArtifactFileName(c *gin.Context) {
+func (s *Server) handleUploadAsset_GetArtifactFileName(c *gin.Context) {
 	w := http.ResponseWriter(c.Writer)
 	enableCors(&w)
 
@@ -192,7 +192,7 @@ func handleUploadAsset_GetArtifactFileName(c *gin.Context) {
 	getInternalError(c, fmt.Sprintf("no artifact file found for NFT ID %v", assetCID))
 }
 
-func handleUploadAsset_GetArtifactInfo(c *gin.Context) {
+func (s *Server) handleUploadAsset_GetArtifactInfo(c *gin.Context) {
 	w := http.ResponseWriter(c.Writer)
 	enableCors(&w)
 
@@ -235,7 +235,7 @@ func handleUploadAsset_GetArtifactInfo(c *gin.Context) {
 	getMetadataResult(c, base64EncodedMetadata)
 }
 
-func handleDownloadArtifact(c *gin.Context) {
+func (s *Server) handleDownloadArtifact(c *gin.Context) {
 	w := http.ResponseWriter(c.Writer)
 	enableCors(&w)
 
