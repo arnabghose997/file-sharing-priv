@@ -74,7 +74,7 @@ func (s *Server) handleAddCredits(c *gin.Context) {
 	nodeAddress := "http://localhost:20007"
 	quorumType := 2
 
-	selfContractHashPath := path.Join("../artifacts/asset_usage_contract.wasm")
+	selfContractHashPath := path.Join("../artifacts/inference_credit_purchase_contract.wasm")
 
 	var contractInputRequest ContractInputRequest
 
