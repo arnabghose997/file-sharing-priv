@@ -92,8 +92,8 @@ func main() {
 	
 	// Credits Balance Contract Callback
 	r.GET("/api/credit_balance/:did", server.handleGetCreditBalance)
-	r.POST("/api/add_credits", nil)
-
+	r.POST("/api/add_credits", server.handleAddCredits)
+	r.POST("/api/deduct_credits", server.handleDeductCredits)
 
 	r.Run(":8082")
 }

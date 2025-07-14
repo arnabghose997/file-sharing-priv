@@ -139,6 +139,53 @@ func (s *Server) handleAddCredits(c *gin.Context) {
 	return
 }
 
+type DeductCreditsReq struct {
+	DID string `json:"did"`
+}
+
+func (s *Server) handleDeductCredits(c *gin.Context) {
+	var deductCreditsReq DeductCreditsReq
+	err := json.NewDecoder(c.Request.Body).Decode(&deductCreditsReq)
+	if err != nil {
+		wrapError(c.JSON, "err: Invalid request body")
+		return
+	}
+	if deductCreditsReq.DID == "" {
+		getClientError(c, "DID is required")
+		return
+	}
+
+	err = deductCreditsFromDB(s.DB, deductCreditsReq.DID)
+	if err != nil {
+		getInternalError(c, "Failed to deduct credits: "+err.Error())
+		return
+	}
+
+	wrapSuccess(c.JSON, fmt.Sprintf("Successfully deducted credits from DID %s", deductCreditsReq.DID))
+}
+
+func deductCreditsFromDB(db *leveldb.DB, did string) error {
+	getCreditBalance, err := getCreditBalance(db, did)
+	if err != nil {
+		return fmt.Errorf("failed to get existing credit balance for DID %s: %v", did, err)
+	}
+
+	getCreditBalance.Credit -= 1
+	getCreditBalance.Timestamp = strconv.FormatInt(time.Now().Unix(), 10)
+
+	creditInfoBytes, err := json.Marshal(getCreditBalance)
+	if err != nil {
+		return fmt.Errorf("failed to marshal credit info: %v", err)
+	}
+
+	err = db.Put([]byte(did), creditInfoBytes, nil)
+	if err != nil {
+		return fmt.Errorf("failed to deduct credits for DID %s: %v", did, err)
+	}
+
+	return nil
+}
+
 func addCreditsToDB(db *leveldb.DB, did string, creditCount uint, currTimestamp string) error {
 	getCreditBalance, err := getCreditBalance(db, did)
 	if err != nil {
