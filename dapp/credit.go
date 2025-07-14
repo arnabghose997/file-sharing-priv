@@ -13,6 +13,8 @@ import (
 	wasmbridge "github.com/rubixchain/rubix-wasm/go-wasm-bridge"
 	wasmContext "github.com/rubixchain/rubix-wasm/go-wasm-bridge/context"
 	"github.com/syndtr/goleveldb/leveldb"
+
+	"dapp/host/credits"
 )
 
 type CreditInfo struct {
@@ -93,7 +95,7 @@ func (s *Server) handleAddCredits(c *gin.Context) {
 	// Create Import function registry
 	hostFnRegistry := wasmbridge.NewHostFunctionRegistry()
 	hostFnRegistry.Register(ft.NewDoTransferFTApiCall())
-	hostFnRegistry.Register(ft.NewDoCreateFTApiCall())
+	hostFnRegistry.Register(credits.NewDoAddCredit())
 
 	// Initialize the WASM module
 	wasmModule, err := wasmbridge.NewWasmModule(
