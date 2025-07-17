@@ -28,8 +28,6 @@ func (h *DoAddCredit) FuncType() *wasmtime.FuncType {
 		[]*wasmtime.ValType{
 			wasmtime.NewValType(wasmtime.KindI32), // input_ptr
 			wasmtime.NewValType(wasmtime.KindI32), // input_len
-			wasmtime.NewValType(wasmtime.KindI32), // resp_ptr_ptr
-			wasmtime.NewValType(wasmtime.KindI32), // resp_len_ptr
 		},
 		[]*wasmtime.ValType{wasmtime.NewValType(wasmtime.KindI32)}, // return i32
 	)
