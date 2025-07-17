@@ -146,6 +146,9 @@ type DeductCreditsReq struct {
 }
 
 func (s *Server) handleDeductCredits(c *gin.Context) {
+	w := http.ResponseWriter(c.Writer)
+	enableCors(&w)
+
 	var deductCreditsReq DeductCreditsReq
 	err := json.NewDecoder(c.Request.Body).Decode(&deductCreditsReq)
 	if err != nil {

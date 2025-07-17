@@ -89,6 +89,7 @@ func callTransferFTAPI(webSocketConn *websocket.Conn, nodeAddress string, quorum
 		return fmt.Errorf("error occured while invoking FT transfer twice, err: %v", err)
 	}
 
+
 	_, resp, err := webSocketConn.ReadMessage()
 	if err != nil {
 		return fmt.Errorf("unable to read response from web socket connection for FT Transfer, err: %v", err)
